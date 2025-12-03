@@ -68,4 +68,3 @@ export class UpdateUserDto {
   @IsBoolean()
   isActive?: boolean;
 }
-

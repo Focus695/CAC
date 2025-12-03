@@ -13,4 +13,3 @@ export class ReviewsController {
     return this.reviewsService.getProductReviews(productId);
   }
 }
-

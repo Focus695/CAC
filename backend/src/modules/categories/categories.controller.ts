@@ -13,4 +13,3 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 }
-

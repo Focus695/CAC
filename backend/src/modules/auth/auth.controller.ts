@@ -14,18 +14,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User successfully registered' })
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(
-      registerDto.email,
-      registerDto.password,
-      registerDto.username,
-    );
+    return this.authService.register(registerDto.email, registerDto.password, registerDto.username);
   }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'User successfully logged in' })
-  async login(@Request() req, @Body() loginDto: LoginDto) {
+  async login(@Request() req: any, @Body() loginDto: LoginDto) {
     return this.authService.login(req.user);
   }
 
@@ -33,8 +29,7 @@ export class AuthController {
   @Post('profile')
   @ApiOperation({ summary: 'Get user profile' })
   @ApiResponse({ status: 200, description: 'User profile retrieved' })
-  getProfile(@Request() req) {
+  getProfile(@Request() req: any) {
     return req.user;
   }
 }
-

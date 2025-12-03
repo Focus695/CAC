@@ -22,11 +22,14 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'picsum.photos'], // 添加 picsum.photos 作为图片域名
     formats: ['image/avif', 'image/webp'],
   },
-  experimental: {
-    appDir: true,
+  // 配置国际化路由
+  i18n: {
+    locales: ['zh', 'en'],
+    defaultLocale: 'zh',
+    localeDetection: false,
   },
 };
 

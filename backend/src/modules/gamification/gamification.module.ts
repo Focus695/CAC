@@ -7,4 +7,3 @@ import { GamificationController } from './gamification.controller';
   controllers: [GamificationController],
 })
 export class GamificationModule {}
-

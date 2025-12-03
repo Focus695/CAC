@@ -26,7 +26,7 @@ export class GamificationService {
 
   async addPoints(userId: string, points: number) {
     const profile = await this.getUserProfile(userId);
-    
+
     return this.prisma.gamificationProfile.update({
       where: { userId },
       data: {
@@ -36,4 +36,3 @@ export class GamificationService {
     });
   }
 }
-

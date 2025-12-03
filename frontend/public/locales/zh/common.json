@@ -1,0 +1,49 @@
+{
+  "checkout": {
+    "shippingAddress": "收货雅址",
+    "confirmPayment": "确认支付",
+    "orderSummary": "雅物清单",
+    "firstName": "姓",
+    "lastName": "名",
+    "phone": "联系电话",
+    "address": "详细地址",
+    "encryptedConnection": "加密连接 · 安全支付",
+    "pleaseFillAllFields": "请填写所有必填字段",
+    "orderProcessingFailed": "订单处理失败，请稍后重试",
+    "thankYou": "感谢您的惠顾",
+    "orderSuccessMessage": "您的雅物将很快寄出。愿此香韵伴您度过宁静时光。",
+    "backToHome": "返回首页"
+  },
+  "order": {
+    "orderNumber": "订单号",
+    "status": "状态",
+    "total": "总计",
+    "loadingOrders": "正在加载订单...",
+    "noOrders": "您还没有任何订单",
+    "confirmed": "已确认",
+    "shipped": "已发货",
+    "delivered": "已送达",
+    "canceled": "已取消",
+    "pending": "待处理",
+    "failed": "失败",
+    "paid": "已支付",
+    "fetchOrdersFailed": "获取订单失败，请稍后重试"
+  },
+  "settings": {
+    "accountSettings": "账户设置",
+    "accountInfo": "账户信息",
+    "email": "邮箱",
+    "preferences": "偏好设置",
+    "pushNotifications": "推送通知",
+    "darkMode": "深色模式",
+    "security": "安全设置",
+    "changePassword": "修改密码",
+    "bindPhone": "绑定手机"
+  },
+  "cart": {
+    "cart": "购物车",
+    "checkout": "结算",
+    "empty": "购物车是空的",
+    "addItems": "请添加一些商品到购物车"
+  }
+}

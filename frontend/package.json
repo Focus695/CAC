@@ -10,10 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "^14.0.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "framer-motion": "^10.16.16",
+    "@hookform/resolvers": "^3.3.2",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",
@@ -31,29 +28,36 @@
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
+    "axios": "^1.6.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "date-fns": "^3.0.6",
+    "framer-motion": "^10.16.16",
+    "i18next": "^25.7.1",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "lucide-react": "^0.554.0",
+    "next": "^14.0.4",
+    "next-pwa": "^5.6.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.49.2",
+    "react-hot-toast": "^2.6.0",
+    "react-i18next": "^16.3.5",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
-    "lucide-react": "^0.303.0",
-    "axios": "^1.6.2",
-    "zustand": "^4.4.7",
-    "react-hook-form": "^7.49.2",
-    "@hookform/resolvers": "^3.3.2",
     "zod": "^3.22.4",
-    "date-fns": "^3.0.6",
-    "next-pwa": "^5.6.0"
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@types/next-pwa": "^5.6.9",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
-    "typescript": "^5.3.3",
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.33",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
-    "eslint-config-next": "^14.0.4"
+    "eslint-config-next": "^14.0.4",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3"
   }
 }
-

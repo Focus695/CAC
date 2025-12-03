@@ -8,4 +8,3 @@ import { UsersController } from './users.controller';
   exports: [UsersService],
 })
 export class UsersModule {}
-

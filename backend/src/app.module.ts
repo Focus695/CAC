@@ -35,4 +35,3 @@ import { GamificationModule } from './modules/gamification/gamification.module';
   ],
 })
 export class AppModule {}
-

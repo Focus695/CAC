@@ -42,26 +42,26 @@ enum UserRole {
 
 // Product Model
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?  @db.Text
-  price       Decimal  @db.Decimal(10, 2)
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String?  @db.Text
+  price        Decimal  @db.Decimal(10, 2)
   comparePrice Decimal? @db.Decimal(10, 2)
-  sku         String?  @unique
-  stock       Int      @default(0)
-  images      String[] // Array of image URLs
-  categoryId  String
-  isActive    Boolean  @default(true)
-  isFeatured  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  sku          String?  @unique
+  stock        Int      @default(0)
+  images       String[] // Array of image URLs
+  categoryId   String
+  isActive     Boolean  @default(true)
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  category Category
-  cartItems CartItem[]
+  category   Category           @relation(fields: [categoryId], references: [id])
+  cartItems  CartItem[]
   orderItems OrderItem[]
-  reviews   Review[]
+  reviews    Review[]
   attributes ProductAttribute[]
 
   @@map("products")
@@ -121,15 +121,15 @@ model CartItem {
 
 // Order Model
 model Order {
-  id         String      @id @default(cuid())
-  userId     String
-  orderNumber String     @unique
-  status     OrderStatus @default(PENDING)
-  total      Decimal     @db.Decimal(10, 2)
-  subtotal   Decimal     @db.Decimal(10, 2)
-  tax        Decimal     @default(0) @db.Decimal(10, 2)
-  shipping   Decimal     @default(0) @db.Decimal(10, 2)
-  discount   Decimal     @default(0) @db.Decimal(10, 2)
+  id                String        @id @default(cuid())
+  userId            String
+  orderNumber       String        @unique
+  status            OrderStatus   @default(PENDING)
+  total             Decimal       @db.Decimal(10, 2)
+  subtotal          Decimal       @db.Decimal(10, 2)
+  tax               Decimal       @default(0) @db.Decimal(10, 2)
+  shipping          Decimal       @default(0) @db.Decimal(10, 2)
+  discount          Decimal       @default(0) @db.Decimal(10, 2)
   shippingAddressId String?
   billingAddressId  String?
   paymentMethod     String?
@@ -139,10 +139,10 @@ model Order {
   updatedAt         DateTime      @updatedAt
 
   // Relations
-  user            User       @relation(fields: [userId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
   items           OrderItem[]
-  shippingAddress Address?   @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddress  Address?   @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddress Address?    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress  Address?    @relation("BillingAddress", fields: [billingAddressId], references: [id])
 
   @@map("orders")
 }
@@ -183,7 +183,7 @@ model OrderItem {
 
 // Address Model
 model Address {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   userId    String
   type      AddressType
   firstName String
@@ -196,14 +196,14 @@ model Address {
   zipCode   String
   country   String
   phone     String?
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isDefault Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   // Relations
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shippingOrders  Order[] @relation("ShippingAddress")
-  billingOrders   Order[] @relation("BillingAddress")
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders Order[] @relation("ShippingAddress")
+  billingOrders  Order[] @relation("BillingAddress")
 
   @@map("addresses")
 }
@@ -216,15 +216,15 @@ enum AddressType {
 
 // Review Model
 model Review {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  rating    Int      // 1-5
-  title     String?
-  comment   String?  @db.Text
-  isVerified Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  rating     Int // 1-5
+  title      String?
+  comment    String?  @db.Text
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -236,19 +236,18 @@ model Review {
 
 // Gamification Profile Model
 model GamificationProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  points    Int      @default(0)
-  level     Int      @default(1)
-  experience Int     @default(0)
-  badges    String[] // Array of badge IDs
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  points       Int      @default(0)
+  level        Int      @default(1)
+  experience   Int      @default(0)
+  badges       String[] // Array of badge IDs
   achievements String[] // Array of achievement IDs
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("gamification_profiles")
 }
-

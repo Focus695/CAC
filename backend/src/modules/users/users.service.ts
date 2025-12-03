@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 
@@ -7,6 +7,15 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
+    // 检查邮箱是否已经存在
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: createUserDto.email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('邮箱已经被注册');
+    }
+
     return this.prisma.user.create({
       data: createUserDto,
     });
@@ -84,4 +93,3 @@ export class UsersService {
     });
   }
 }
-

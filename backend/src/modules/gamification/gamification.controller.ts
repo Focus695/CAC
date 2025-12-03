@@ -12,8 +12,7 @@ export class GamificationController {
 
   @Get('profile')
   @ApiOperation({ summary: 'Get user gamification profile' })
-  getProfile(@Request() req) {
+  getProfile(@Request() req: any) {
     return this.gamificationService.getUserProfile(req.user.userId);
   }
 }
-
