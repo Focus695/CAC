@@ -30,6 +30,27 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Create default admin user
+  const usersService = app.get(require('./modules/users/users.service').UsersService);
+  const adminEmail = 'zenchill@example.com';
+  const adminPassword = 'zenchill888';
+
+  const existingAdmin = await usersService.findByEmail(adminEmail);
+  if (!existingAdmin) {
+    const hashedPassword = await require('bcryptjs').hash(adminPassword, 10);
+    await usersService.create({
+      email: adminEmail,
+      password: hashedPassword,
+      username: 'zenchill',
+      role: 'ADMIN', // Use the existing ADMIN role from the schema
+    });
+    console.log('Default admin user created:');
+    console.log(`Username: zenchill`);
+    console.log(`Email: ${adminEmail}`);
+    console.log(`Password: ${adminPassword}`);
+    console.log('Role: SUPER ADMIN');
+  }
+
   // Validation
   app.useGlobalPipes(
     new ValidationPipe({
@@ -55,7 +76,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
 
-  // Set up Swagger without any prefix issues
+  // Set up Swagger - explicitly specify options to ensure correct path generation
   SwaggerModule.setup('docs', app, document);
 
   const port = configService.get('PORT') || 3001;

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,84 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Model
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String?  @unique
-  password  String
-  firstName String?
-  lastName  String?
-  avatar    String?
-  role      UserRole @default(CUSTOMER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  orders       Order[]
-  cartItems    CartItem[]
+  id           String               @id @default(cuid())
+  email        String               @unique
+  username     String?              @unique
+  password     String
+  firstName    String?
+  lastName     String?
+  avatar       String?
+  role         UserRole             @default(CUSTOMER)
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
   addresses    Address[]
-  reviews      Review[]
+  cartItems    CartItem[]
   gamification GamificationProfile?
+  orders       Order[]
+  reviews      Review[]
 
   @@map("users")
 }
 
-enum UserRole {
-  CUSTOMER
-  ADMIN
-  MODERATOR
-}
-
-// Product Model
 model Product {
-  id           String   @id @default(cuid())
-  name         String
-  slug         String   @unique
-  description  String?  @db.Text
-  price        Decimal  @db.Decimal(10, 2)
-  comparePrice Decimal? @db.Decimal(10, 2)
-  sku          String?  @unique
-  stock        Int      @default(0)
-  images       String[] // Array of image URLs
-  categoryId   String
-  isActive     Boolean  @default(true)
-  isFeatured   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  category   Category           @relation(fields: [categoryId], references: [id])
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-  reviews    Review[]
-  attributes ProductAttribute[]
+  id                String             @id @default(cuid())
+  slug              String             @unique
+  price             Decimal            @db.Decimal(10, 2)
+  comparePrice      Decimal?           @db.Decimal(10, 2)
+  sku               String?            @unique
+  stock             Int                @default(0)
+  categoryId        String
+  isActive          Boolean            @default(true)
+  isFeatured        Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  craftsmanship_en  String?
+  craftsmanship_zh  String?
+  detailImages      String[]
+  elegantDesc_en    String?
+  elegantDesc_zh    String?
+  healthBenefits_en String?
+  healthBenefits_zh String?
+  mainImage         String?
+  name_en           String
+  name_zh           String
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  attributes        ProductAttribute[]
+  category          Category           @relation(fields: [categoryId], references: [id])
+  reviews           Review[]
 
   @@map("products")
 }
 
-// Category Model
 model Category {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   name        String
-  slug        String   @unique
-  description String?  @db.Text
+  slug        String     @unique
+  description String?
   image       String?
   parentId    String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryTree")
-  products Product[]
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
 
   @@map("categories")
 }
 
-// Product Attribute Model
 model ProductAttribute {
   id        String   @id @default(cuid())
   productId String
@@ -95,14 +83,11 @@ model ProductAttribute {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relations
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("product_attributes")
 }
 
-// Cart Model
 model CartItem {
   id        String   @id @default(cuid())
   userId    String
@@ -110,16 +95,13 @@ model CartItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relations
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@map("cart_items")
 }
 
-// Order Model
 model Order {
   id                String        @id @default(cuid())
   userId            String
@@ -134,17 +116,92 @@ model Order {
   billingAddressId  String?
   paymentMethod     String?
   paymentStatus     PaymentStatus @default(PENDING)
-  notes             String?       @db.Text
+  notes             String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
-
-  // Relations
-  user            User        @relation(fields: [userId], references: [id])
-  items           OrderItem[]
-  shippingAddress Address?    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddress  Address?    @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  trackingNumber    String?
+  items             OrderItem[]
+  billingAddress    Address?      @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddress   Address?      @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  user              User          @relation(fields: [userId], references: [id])
 
   @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Address {
+  id             String      @id @default(cuid())
+  userId         String
+  type           AddressType
+  firstName      String
+  lastName       String
+  company        String?
+  address1       String
+  address2       String?
+  city           String
+  state          String?
+  zipCode        String
+  country        String
+  phone          String?
+  isDefault      Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billingOrders  Order[]     @relation("BillingAddress")
+  shippingOrders Order[]     @relation("ShippingAddress")
+
+  @@map("addresses")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  rating     Int
+  title      String?
+  comment    String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+model GamificationProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  points       Int      @default(0)
+  level        Int      @default(1)
+  experience   Int      @default(0)
+  badges       String[]
+  achievements String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("gamification_profiles")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  MODERATOR
 }
 
 enum OrderStatus {
@@ -164,90 +221,8 @@ enum PaymentStatus {
   REFUNDED
 }
 
-// Order Item Model
-model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Decimal  @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-
-  @@map("order_items")
-}
-
-// Address Model
-model Address {
-  id        String      @id @default(cuid())
-  userId    String
-  type      AddressType
-  firstName String
-  lastName  String
-  company   String?
-  address1  String
-  address2  String?
-  city      String
-  state     String?
-  zipCode   String
-  country   String
-  phone     String?
-  isDefault Boolean     @default(false)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  // Relations
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shippingOrders Order[] @relation("ShippingAddress")
-  billingOrders  Order[] @relation("BillingAddress")
-
-  @@map("addresses")
-}
-
 enum AddressType {
   SHIPPING
   BILLING
   BOTH
-}
-
-// Review Model
-model Review {
-  id         String   @id @default(cuid())
-  userId     String
-  productId  String
-  rating     Int // 1-5
-  title      String?
-  comment    String?  @db.Text
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Relations
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-  @@map("reviews")
-}
-
-// Gamification Profile Model
-model GamificationProfile {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  points       Int      @default(0)
-  level        Int      @default(1)
-  experience   Int      @default(0)
-  badges       String[] // Array of badge IDs
-  achievements String[] // Array of achievement IDs
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("gamification_profiles")
 }

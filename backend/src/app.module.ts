@@ -10,6 +10,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { GamificationModule } from './modules/gamification/gamification.module';
     OrdersModule,
     ReviewsModule,
     GamificationModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

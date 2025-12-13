@@ -1,9 +1,73 @@
 // API服务层 - 用于与后端交互
 // 该文件可以进一步扩展，支持更多API端点和功能
 
-// 如果没有配置环境变量，则在本地开发时默认指向 Nest 后端端口 3001
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// 自动检测后端端口的函数 (3000-3010)
+async function findBackendPort(): Promise<number> {
+  const baseUrl = 'http://localhost';
+  const minPort = 3000;
+  const maxPort = 3010;
+
+  for (let port = minPort; port <= maxPort; port++) {
+    try {
+      // 使用Promise.race实现超时
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 100); // 100ms超时
+
+      // 尝试HEAD请求到根路径，如果失败可以尝试其他已知路径
+      try {
+        const response = await fetch(`${baseUrl}:${port}/`, {
+          method: 'HEAD',
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        return port; // 如果成功，返回该端口
+      } catch {
+        // 如果根路径HEAD请求失败，尝试其他常见路径
+      }
+
+      // 尝试GET请求到健康检查或API路径
+      const apiPaths = ['/api', '/health', '/status', '/docs'];
+      for (const path of apiPaths) {
+        try {
+          const response = await fetch(`${baseUrl}:${port}${path}`, {
+            method: 'GET',
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+          return port; // 如果成功，返回该端口
+        } catch {
+          // 如果失败，尝试下一个路径
+        }
+      }
+
+      // 所有尝试都失败了，继续下一个端口
+    } catch (error) {
+      // 端口不可用，继续尝试
+    }
+  }
+
+  // 如果没有找到可用端口，返回默认端口
+  return 3001;
+}
+
+// 自动检测并设置API基础URL
+let API_BASE_URL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// 在应用初始化时检测端口
+(async () => {
+  // 只有当没有配置环境变量时才自动检测端口
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    try {
+      const port = await findBackendPort();
+      API_BASE_URL = `http://localhost:${port}`;
+      console.log(`已自动检测到后端端口: ${port}`);
+    } catch (error) {
+      console.error('自动检测后端端口失败，将使用默认端口:', error);
+    }
+  }
+})();
 
 /**
  * 处理API响应的辅助函数
@@ -270,6 +334,191 @@ export const apiService = {
       return handleApiResponse<any>(response);
     } catch (error) {
       console.error('获取用户信息失败:', error);
+      throw error;
+    }
+  },
+
+  // Admin endpoints
+  async getUsers(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any[]>(response);
+    } catch (error) {
+      console.error('获取用户列表失败:', error);
+      throw error;
+    }
+  },
+
+  async updateUser(userId: string, userData: any): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(userData),
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('更新用户失败:', error);
+      throw error;
+    }
+  },
+
+  async deleteUser(userId: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('删除用户失败:', error);
+      throw error;
+    }
+  },
+
+  async getAdminProducts(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any[]>(response);
+    } catch (error) {
+      console.error('获取产品列表失败:', error);
+      throw error;
+    }
+  },
+
+  async createProduct(productData: any): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(productData),
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('创建产品失败:', error);
+      throw error;
+    }
+  },
+
+  async updateProduct(productId: string, productData: any): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(productData),
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('更新产品失败:', error);
+      throw error;
+    }
+  },
+
+  async deleteProduct(productId: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('删除产品失败:', error);
+      throw error;
+    }
+  },
+
+  async toggleProductStatus(productId: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('切换产品状态失败:', error);
+      throw error;
+    }
+  },
+
+  async getOrders(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any[]>(response);
+    } catch (error) {
+      console.error('获取订单列表失败:', error);
+      throw error;
+    }
+  },
+
+  async getOrderDetails(orderId: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('获取订单详情失败:', error);
+      throw error;
+    }
+  },
+
+  async shipOrder(orderId: string, trackingNumber: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/ship`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ trackingNumber }),
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('标记订单为已发货失败:', error);
+      throw error;
+    }
+  },
+
+  async deliverOrder(orderId: string): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/deliver`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('标记订单为已收货失败:', error);
       throw error;
     }
   },

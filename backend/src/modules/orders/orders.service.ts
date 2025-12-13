@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto, UpdatePaymentStatusDto, UpdateOrderStatusDto } from './dto/order.dto';
 import { CartService } from '../cart/cart.service';
@@ -45,7 +45,9 @@ export class OrdersService {
     // Create order in database
     const order = await this.prisma.order.create({
       data: {
-        userId,
+        user: {
+          connect: { id: userId }
+        },
         orderNumber: this.generateOrderNumber(),
         status: OrderStatus.PENDING,
         paymentStatus: PaymentStatus.PENDING,
@@ -57,21 +59,27 @@ export class OrdersService {
         notes: createOrderDto.notes,
         shippingAddress: {
           create: {
-            userId,
+            user: {
+              connect: { id: userId }
+            },
             type: AddressType.SHIPPING,
             ...createOrderDto.shippingAddress
           }
         },
         billingAddress: createOrderDto.billingAddress ? {
           create: {
-            userId,
+            user: {
+              connect: { id: userId }
+            },
             type: AddressType.BILLING,
             ...createOrderDto.billingAddress
           }
         } : undefined,
         items: {
           create: cartItems.map(item => ({
-            productId: item.productId,
+            product: {
+              connect: { id: item.productId }
+            },
             quantity: item.quantity,
             price: item.product.price
           }))
@@ -143,6 +151,78 @@ export class OrdersService {
       data: {
         paymentStatus: 'PAID',
         status: 'CONFIRMED'
+      }
+    });
+  }
+
+  // Get all orders (admin only)
+  async getAllOrders() {
+    return this.prisma.order.findMany({
+      include: {
+        user: {
+          select: {
+            email: true,
+            username: true
+          }
+        },
+        items: {
+          include: {
+            product: true
+          }
+        },
+        shippingAddress: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  }
+
+  // Get order details by id (admin only)
+  async getOrderDetails(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: {
+          select: {
+            email: true,
+            username: true
+          }
+        },
+        items: {
+          include: {
+            product: true
+          }
+        },
+        shippingAddress: true,
+        billingAddress: true
+      }
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    return order;
+  }
+
+  // Mark order as shipped with tracking number
+  async shipOrder(orderId: string, trackingNumber: string) {
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: OrderStatus.SHIPPED,
+        trackingNumber
+      }
+    });
+  }
+
+  // Mark order as delivered
+  async markOrderDelivered(orderId: string) {
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: OrderStatus.DELIVERED
       }
     });
   }

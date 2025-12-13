@@ -50,7 +50,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       setSubtotal(cartData.subtotal || 0);
       setTotalItems(cartData.totalItems || 0);
     } catch (error) {
+      // Handle unauthorized errors gracefully (for admin users who don't have a cart)
       console.error('Failed to fetch cart:', error);
+      // Don't show an error message to the user, just clear the cart
+      setCartItems([]);
+      setSubtotal(0);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }

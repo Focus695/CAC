@@ -9,14 +9,33 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const response = ctx.getResponse<Response>();
       const request = ctx.getRequest<Request>();
 
-      // Exclude Swagger UI paths
-      if (request?.originalUrl?.startsWith('/api/docs')) {
-        // Let NestJS handle Swagger errors normally
+      // DO NOT JSON-format Swagger UI paths - they should return CSS/JS with proper MIME types
+      if (request?.originalUrl?.startsWith('/docs')) {
+        // For HTTP exceptions, use default NestJS error handling
         if (exception instanceof HttpException) {
-          response.status(exception.getStatus()).send(exception.getResponse());
-        } else {
-          response.status(HttpStatus.INTERNAL_SERVER_ERROR).send('Internal server error');
+          // Send the raw error response without JSON formatting
+          const status = exception.getStatus();
+          const res = exception.getResponse();
+
+          // If it's a string, send as text/plain
+          if (typeof res === 'string') {
+            response.status(status).type('text/plain').send(res);
+            return;
+          }
+
+          // If it's an object with a message, send as text/plain
+          if (typeof res === 'object' && res && 'message' in res && typeof res.message === 'string') {
+            response.status(status).type('text/plain').send(res.message);
+            return;
+          }
+
+          // Otherwise, send as JSON for API error consistency (though this shouldn't happen for Swagger paths)
+          response.status(status).json(res);
+          return;
         }
+
+        // For non-HTTP exceptions, send a generic text response
+        response.status(HttpStatus.INTERNAL_SERVER_ERROR).type('text/plain').send('Internal server error');
         return;
       }
 
