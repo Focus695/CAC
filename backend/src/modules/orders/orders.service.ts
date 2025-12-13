@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Decimal } from '@prisma/client/runtime/library';
 import { CreateOrderDto, UpdatePaymentStatusDto, UpdateOrderStatusDto } from './dto/order.dto';
 import { CartService } from '../cart/cart.service';
 import { AddressType, OrderStatus, PaymentStatus } from '@prisma/client';
@@ -31,81 +32,86 @@ export class OrdersService {
       throw new Error('Cart is empty');
     }
 
-    // Calculate subtotal
-    const subtotal = cartItems.reduce(
-      (sum: number, item: any) => sum + parseFloat(item.product.price.toString()) * item.quantity,
-      0
-    );
+    // Calculate subtotal using Prisma Decimal
+    const subtotal = cartItems.reduce((sum: Decimal, item: any) => {
+      return sum.add(item.product.price.times(item.quantity));
+    }, new Decimal(0));
 
     // Calculate tax and shipping (simplified for now)
-    const tax = subtotal * 0.1; // 10% tax
-    const shipping = subtotal > 100 ? 0 : 5; // Free shipping over $100
-    const total = subtotal + tax + shipping;
+    const tax = subtotal.times(0.1); // 10% tax
+    const shipping = subtotal.greaterThan(new Decimal(100)) ? new Decimal(0) : new Decimal(5); // Free shipping over $100
+    const total = subtotal.add(tax).add(shipping);
 
-    // Create order in database
-    const order = await this.prisma.order.create({
-      data: {
-        user: {
-          connect: { id: userId }
-        },
-        orderNumber: this.generateOrderNumber(),
-        status: OrderStatus.PENDING,
-        paymentStatus: PaymentStatus.PENDING,
-        subtotal: subtotal.toString(),
-        tax: tax.toString(),
-        shipping: shipping.toString(),
-        total: total.toString(),
-        paymentMethod: createOrderDto.paymentMethod,
-        notes: createOrderDto.notes,
-        shippingAddress: {
-          create: {
-            user: {
-              connect: { id: userId }
-            },
-            type: AddressType.SHIPPING,
-            ...createOrderDto.shippingAddress
+    // Create order and clear cart in a transaction to ensure data consistency
+    const order = await this.prisma.$transaction(async (prisma) => {
+      // Create order in database
+      const createdOrder = await prisma.order.create({
+        data: {
+          user: {
+            connect: { id: userId }
+          },
+          orderNumber: this.generateOrderNumber(),
+          status: OrderStatus.PENDING,
+          paymentStatus: PaymentStatus.PENDING,
+          subtotal,
+          tax,
+          shipping,
+          total,
+          paymentMethod: createOrderDto.paymentMethod,
+          notes: createOrderDto.notes,
+          shippingAddress: {
+            create: {
+              user: {
+                connect: { id: userId }
+              },
+              type: AddressType.SHIPPING,
+              ...createOrderDto.shippingAddress
+            }
+          },
+          billingAddress: createOrderDto.billingAddress ? {
+            create: {
+              user: {
+                connect: { id: userId }
+              },
+              type: AddressType.BILLING,
+              ...createOrderDto.billingAddress
+            }
+          } : undefined,
+          items: {
+            create: cartItems.map(item => ({
+              product: {
+                connect: { id: item.productId }
+              },
+              quantity: item.quantity,
+              price: item.product.price
+            }))
           }
         },
-        billingAddress: createOrderDto.billingAddress ? {
-          create: {
-            user: {
-              connect: { id: userId }
-            },
-            type: AddressType.BILLING,
-            ...createOrderDto.billingAddress
-          }
-        } : undefined,
-        items: {
-          create: cartItems.map(item => ({
-            product: {
-              connect: { id: item.productId }
-            },
-            quantity: item.quantity,
-            price: item.product.price
-          }))
+        include: {
+          items: {
+            include: {
+              product: true
+            }
+          },
+          shippingAddress: true,
+          billingAddress: true
         }
-      },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        },
-        shippingAddress: true,
-        billingAddress: true
-      }
-    });
+      });
 
-    // Clear cart after successful order creation
-    await this.prisma.cartItem.deleteMany({
-      where: { userId }
+      // Clear cart after successful order creation
+      await prisma.cartItem.deleteMany({
+        where: { userId }
+      });
+
+      return createdOrder;
     });
 
     return order;
   }
 
   // Get user orders
-  async getUserOrders(userId: string) {
+  async getUserOrders(userId: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
     return this.prisma.order.findMany({
       where: { userId },
       include: {
@@ -119,6 +125,8 @@ export class OrdersService {
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: limit,
     });
   }
 
@@ -155,9 +163,66 @@ export class OrdersService {
     });
   }
 
-  // Get all orders (admin only)
-  async getAllOrders() {
-    return this.prisma.order.findMany({
+  // Get all orders (admin only) with search, filter, and sort
+  async getAllOrders(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    filter?: {
+      status?: OrderStatus;
+      paymentStatus?: PaymentStatus;
+      paymentMethod?: string;
+      userId?: string;
+    },
+    sort?: { field: string; order: 'asc' | 'desc' }
+  ) {
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: any = {};
+
+    // Search by order number or user email
+    if (search) {
+      where.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Filter by status
+    if (filter?.status) {
+      where.status = filter.status;
+    }
+
+    // Filter by payment status
+    if (filter?.paymentStatus) {
+      where.paymentStatus = filter.paymentStatus;
+    }
+
+    // Filter by payment method
+    if (filter?.paymentMethod) {
+      where.paymentMethod = filter.paymentMethod;
+    }
+
+    // Filter by user ID
+    if (filter?.userId) {
+      where.userId = filter.userId;
+    }
+
+    // Build order by clause
+    const orderBy: any = {};
+    if (sort?.field) {
+      orderBy[sort.field] = sort.order;
+    } else {
+      // Default sort by createdAt descending
+      orderBy.createdAt = 'desc';
+    }
+
+    // Get total count
+    const totalCount = await this.prisma.order.count({ where });
+
+    // Get orders
+    const orders = await this.prisma.order.findMany({
       include: {
         user: {
           select: {
@@ -172,10 +237,24 @@ export class OrdersService {
         },
         shippingAddress: true
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      where,
+      orderBy,
+      skip,
+      take: limit
     });
+
+    // Return with pagination info
+    return {
+      orders,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasNext: page < Math.ceil(totalCount / limit),
+        hasPrev: page > 1,
+      },
+    };
   }
 
   // Get order details by id (admin only)

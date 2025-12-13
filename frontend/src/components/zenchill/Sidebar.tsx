@@ -55,17 +55,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
       <div>
         <div className="flex items-center gap-3 mb-16">
           <div className="w-10 h-10 rounded-full bg-cinnabar flex items-center justify-center text-white font-serif font-bold shadow-md">
-            禅
+            Z
           </div>
           <div>
-            <h1 className="text-2xl font-serif font-bold text-cinnabar tracking-widest leading-none">禅韵香舍</h1>
-            <span className="text-[10px] text-stone-500 tracking-[0.2em] uppercase">Zen & Incense</span>
+            <h1 className="text-2xl font-serif font-bold text-cinnabar tracking-widest leading-none">ZENCHILL</h1>
+            <span className="text-[10px] text-stone-500 tracking-[0.2em] uppercase">Botanical Treasures</span>
           </div>
         </div>
 
         {/* Navigation Title */}
         <h2 className="text-3xl font-serif text-sandalwood mb-8 font-bold">
-          导航 <span className="text-sm font-light text-stone-400 ml-2 italic">Menu</span>
+          Menu <span className="text-sm font-light text-stone-400 ml-2 italic">Navigation</span>
         </h2>
 
         {/* Navigation Links */}
@@ -113,8 +113,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
             <div className="flex items-center gap-3">
               <ShoppingBag size={20} className="group-hover:text-cinnabar transition-colors" />
               <div>
-                <span className="block font-bold text-lg font-sans">购物车</span>
-                <span className="text-xs mt-1 block font-serif tracking-wide text-stone-400">Shopping Cart</span>
+                <span className="block font-bold text-lg font-sans">Cart</span>
+                <span className="text-xs mt-1 block font-serif tracking-wide text-stone-400">Shopping Bag</span>
               </div>
             </div>
             {cartCount > 0 && (
@@ -132,19 +132,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
           <div className="space-y-3">
             <Link href="/auth/login" className="w-full block">
               <Button variant="outline" size="sm" className="w-full">
-                登录
+                Sign In
               </Button>
             </Link>
             <Link href="/auth/register" className="w-full block">
               <Button size="sm" className="w-full bg-cinnabar text-white hover:bg-cinnabar/90">
-                注册
+                Sign Up
               </Button>
             </Link>
             <div className="mt-4">
               <LanguageSwitcher />
             </div>
             <p className="text-[10px] text-stone-400 font-light leading-relaxed opacity-60 mt-4">
-              © 2024 Zen & Incense.
+              © 2024 Zenchill.
             </p>
           </div>
         ) : (
@@ -181,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
                       }}
                       className="w-full px-4 py-2 text-sm text-sandalwood hover:bg-stone-100 transition-colors text-left"
                     >
-                      订单管理
+                      My Orders
                     </button>
                     <button
                       onClick={() => {
@@ -190,7 +190,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
                       }}
                       className="w-full px-4 py-2 text-sm text-sandalwood hover:bg-stone-100 transition-colors text-left"
                     >
-                      设置
+                      Settings
                     </button>
                     <button
                       onClick={() => {
@@ -199,7 +199,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
                       }}
                       className="w-full px-4 py-2 text-sm text-cinnabar hover:bg-stone-100 transition-colors text-left border-t border-stone-100 mt-2"
                     >
-                      退出登录
+                      Sign Out
                     </button>
                   </div>
                 </div>
@@ -209,7 +209,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
               </div>
             </div>
             <p className="text-[10px] text-stone-400 font-light leading-relaxed opacity-60">
-              © 2024 Zen & Incense.
+              © 2024 Zenchill.
             </p>
           </div>
         )}

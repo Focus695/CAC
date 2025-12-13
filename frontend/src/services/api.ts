@@ -9,40 +9,33 @@ async function findBackendPort(): Promise<number> {
 
   for (let port = minPort; port <= maxPort; port++) {
     try {
-      // 使用Promise.race实现超时
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 100); // 100ms超时
-
-      // 尝试HEAD请求到根路径，如果失败可以尝试其他已知路径
+      // 关键：不要用 "/" 或 HEAD 探测（Next.js 前端 3000 也会返回 200，容易误判为后端）
+      // 使用“后端特征响应”探测：例如 /products 在后端会返回 application/json
       try {
-        const response = await fetch(`${baseUrl}:${port}/`, {
-          method: 'HEAD',
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        return port; // 如果成功，返回该端口
-      } catch {
-        // 如果根路径HEAD请求失败，尝试其他常见路径
-      }
-
-      // 尝试GET请求到健康检查或API路径
-      const apiPaths = ['/api', '/health', '/status', '/docs'];
-      for (const path of apiPaths) {
-        try {
-          const response = await fetch(`${baseUrl}:${port}${path}`, {
-            method: 'GET',
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-          return port; // 如果成功，返回该端口
-        } catch {
-          // 如果失败，尝试下一个路径
+        const resp = await fetchWithTimeout(
+          `${baseUrl}:${port}/products`,
+          { method: 'GET' },
+          200
+        );
+        const contentType = resp.headers.get('content-type') || '';
+        if (resp.ok && contentType.includes('application/json')) {
+          return port;
         }
+      } catch {
+        // ignore
       }
 
-      // 所有尝试都失败了，继续下一个端口
+      // 兜底：Swagger 文档（通常是 text/html）
+      try {
+        const resp = await fetchWithTimeout(
+          `${baseUrl}:${port}/docs`,
+          { method: 'GET' },
+          200
+        );
+        if (resp.ok) return port;
+      } catch {
+        // ignore
+      }
     } catch (error) {
       // 端口不可用，继续尝试
     }
@@ -70,12 +63,78 @@ let API_BASE_URL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:
 })();
 
 /**
+ * 设置请求超时的辅助函数
+ */
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    return response;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('API请求超时，请稍后重试');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * 将后端分页结构解包为数组
+ * 后端常见返回：
+ * - { products, pagination }
+ * - { users, pagination }
+ * - { orders, pagination }
+ */
+function unwrapList<T>(result: any, key: string): T[] {
+  if (Array.isArray(result)) return result as T[];
+  const maybe = result?.[key];
+  return Array.isArray(maybe) ? (maybe as T[]) : [];
+}
+
+type PaginationInfo = {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+};
+
+function toQueryString(params: Record<string, any>): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === '') continue;
+    searchParams.set(key, String(value));
+  }
+  const qs = searchParams.toString();
+  return qs ? `?${qs}` : '';
+}
+
+/**
  * 处理API响应的辅助函数
  */
 async function handleApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API请求失败: ${response.status} ${response.statusText} - ${errorText}`);
+    // 克隆响应以避免body stream already read错误
+    const clonedResponse = response.clone();
+
+    try {
+      const errorJson = await response.json();
+      // Extract the error message from the JSON response
+      const errorMessage = errorJson.message || `API请求失败: ${response.status} ${response.statusText}`;
+      throw new Error(errorMessage);
+    } catch {
+      // If JSON parsing fails, fall back to text from the cloned response
+      const errorText = await clonedResponse.text();
+      throw new Error(`API请求失败: ${response.status} ${response.statusText} - ${errorText}`);
+    }
   }
   const json = await response.json();
 
@@ -95,16 +154,19 @@ export const apiService = {
   // 获取所有产品
   async getProducts(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/products`);
-      const result = await handleApiResponse<any[]>(response);
+      const response = await fetchWithTimeout(`${API_BASE_URL}/products`);
+      const result = await handleApiResponse<any>(response);
 
-      // 如果接口成功但返回为空，则使用本地静态数据兜底
-      if (!result || result.length === 0) {
+      // 兼容后端分页返回结构：{ products, pagination }
+      const products = unwrapList<any>(result, 'products');
+
+      // 如果接口成功但没有返回产品列表，则使用本地静态数据兜底
+      if (!products || products.length === 0) {
         const constants = await import('../constants');
         return constants.PRODUCTS;
       }
 
-      return result;
+      return products;
     } catch (error) {
       console.error('获取产品失败:', error);
       // 如果API请求失败，直接返回本地静态数据作为降级方案
@@ -116,7 +178,7 @@ export const apiService = {
   // 获取单个产品
   async getProductById(productId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+      const response = await fetchWithTimeout(`${API_BASE_URL}/products/${productId}`);
       const result = await handleApiResponse<any>(response);
 
       // 如果接口成功但未返回具体产品，使用本地静态数据兜底
@@ -134,10 +196,18 @@ export const apiService = {
     }
   },
 
+  // Admin use: fetch product details without falling back to local constants
+  async getProductDetails(productId: string): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/products/${productId}`, {
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
   // 获取所有分类
   async getCategories(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories`);
+      const response = await fetchWithTimeout(`${API_BASE_URL}/categories`);
       return handleApiResponse<any[]>(response);
     } catch (error) {
       console.error('获取分类失败:', error);
@@ -150,13 +220,13 @@ export const apiService = {
   // 创建订单
   async createOrder(orderData: any): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/orders`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(orderData),
+        credentials: 'include', // 使用httpOnly cookie认证
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -168,10 +238,8 @@ export const apiService = {
   // 获取用户订单列表
   async getUserOrders(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/orders`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetchWithTimeout(`${API_BASE_URL}/orders`, {
+        credentials: 'include'
       });
       return handleApiResponse<any[]>(response);
     } catch (error) {
@@ -185,10 +253,8 @@ export const apiService = {
   // 获取购物车
   async getCart(): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/cart`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetchWithTimeout(`${API_BASE_URL}/cart`, {
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -201,13 +267,13 @@ export const apiService = {
   // 添加商品到购物车
   async addToCart(productId: string, quantity: number): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/cart`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/cart`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ productId, quantity }),
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -219,13 +285,13 @@ export const apiService = {
   // 更新购物车商品数量
   async updateCartItem(cartItemId: string, quantity: number): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/cart/items/${cartItemId}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/cart/items/${cartItemId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ quantity }),
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -237,11 +303,9 @@ export const apiService = {
   // 删除购物车商品
   async removeCartItem(cartItemId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/cart/items/${cartItemId}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/cart/items/${cartItemId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -253,11 +317,9 @@ export const apiService = {
   // 清空购物车
   async clearCart(): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/cart`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/cart`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -269,11 +331,9 @@ export const apiService = {
   // 模拟支付成功
   async simulatePaymentSuccess(orderId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/pay-success`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/orders/${orderId}/pay-success`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -289,12 +349,13 @@ export const apiService = {
     username?: string;
   }): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(registerData),
+        credentials: 'include', // 关键：允许浏览器保存后端设置的httpOnly cookie
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -309,12 +370,13 @@ export const apiService = {
     password: string;
   }): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(loginData),
+        credentials: 'include', // 关键：允许浏览器保存后端设置的httpOnly cookie
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -326,10 +388,8 @@ export const apiService = {
   // 获取用户信息
   async getProfile(): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetchWithTimeout(`${API_BASE_URL}/auth/profile`, {
+        credentials: 'include' // 包含cookie以验证身份
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -341,12 +401,44 @@ export const apiService = {
   // Admin endpoints
   async getUsers(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/users`, {
+        credentials: 'include'
       });
-      return handleApiResponse<any[]>(response);
+      const result = await handleApiResponse<any>(response);
+      return unwrapList<any>(result, 'users');
+    } catch (error) {
+      console.error('获取用户列表失败:', error);
+      throw error;
+    }
+  },
+
+  async getUsersPaged(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    isActive?: boolean;
+    sortField?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ users: any[]; pagination: PaginationInfo }> {
+    try {
+      const query = toQueryString({
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+        role: params.role,
+        isActive: params.isActive,
+        sortField: params.sortField,
+        sortOrder: params.sortOrder,
+      });
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/users${query}`, {
+        credentials: 'include',
+      });
+      const result = await handleApiResponse<any>(response);
+      return {
+        users: unwrapList<any>(result, 'users'),
+        pagination: result?.pagination,
+      };
     } catch (error) {
       console.error('获取用户列表失败:', error);
       throw error;
@@ -355,13 +447,13 @@ export const apiService = {
 
   async updateUser(userId: string, userData: any): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(userData),
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -372,11 +464,9 @@ export const apiService = {
 
   async deleteUser(userId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/users/${userId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -387,12 +477,44 @@ export const apiService = {
 
   async getAdminProducts(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/products`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products`, {
+        credentials: 'include'
       });
-      return handleApiResponse<any[]>(response);
+      const result = await handleApiResponse<any>(response);
+      return unwrapList<any>(result, 'products');
+    } catch (error) {
+      console.error('获取产品列表失败:', error);
+      throw error;
+    }
+  },
+
+  async getAdminProductsPaged(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    categoryId?: string;
+    isActive?: boolean;
+    sortField?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ products: any[]; pagination: PaginationInfo }> {
+    try {
+      const query = toQueryString({
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+        categoryId: params.categoryId,
+        isActive: params.isActive,
+        sortField: params.sortField,
+        sortOrder: params.sortOrder,
+      });
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products${query}`, {
+        credentials: 'include',
+      });
+      const result = await handleApiResponse<any>(response);
+      return {
+        products: unwrapList<any>(result, 'products'),
+        pagination: result?.pagination,
+      };
     } catch (error) {
       console.error('获取产品列表失败:', error);
       throw error;
@@ -401,13 +523,13 @@ export const apiService = {
 
   async createProduct(productData: any): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/products`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(productData),
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -418,13 +540,13 @@ export const apiService = {
 
   async updateProduct(productId: string, productData: any): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products/${productId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(productData),
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -435,11 +557,9 @@ export const apiService = {
 
   async deleteProduct(productId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products/${productId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -450,11 +570,9 @@ export const apiService = {
 
   async toggleProductStatus(productId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/status`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products/${productId}/status`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -463,14 +581,89 @@ export const apiService = {
     }
   },
 
+  async publishProduct(productId: string): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products/${productId}/publish`, {
+      method: 'PATCH',
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
+  async unpublishProduct(productId: string): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/products/${productId}/unpublish`, {
+      method: 'PATCH',
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
+  // Admin uploads
+  async uploadImage(file: File): Promise<{ url: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/uploads/image`, {
+      method: 'POST',
+      body: form,
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
+  async uploadImages(files: File[]): Promise<{ images: { url: string }[] }> {
+    const form = new FormData();
+    for (const f of files) form.append('files', f);
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/uploads/images`, {
+      method: 'POST',
+      body: form,
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
   async getOrders(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/orders`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/orders`, {
+        credentials: 'include'
       });
-      return handleApiResponse<any[]>(response);
+      const result = await handleApiResponse<any>(response);
+      return unwrapList<any>(result, 'orders');
+    } catch (error) {
+      console.error('获取订单列表失败:', error);
+      throw error;
+    }
+  },
+
+  async getOrdersPaged(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    paymentStatus?: string;
+    paymentMethod?: string;
+    userId?: string;
+    sortField?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ orders: any[]; pagination: PaginationInfo }> {
+    try {
+      const query = toQueryString({
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+        status: params.status,
+        paymentStatus: params.paymentStatus,
+        paymentMethod: params.paymentMethod,
+        userId: params.userId,
+        sortField: params.sortField,
+        sortOrder: params.sortOrder,
+      });
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/orders${query}`, {
+        credentials: 'include',
+      });
+      const result = await handleApiResponse<any>(response);
+      return {
+        orders: unwrapList<any>(result, 'orders'),
+        pagination: result?.pagination,
+      };
     } catch (error) {
       console.error('获取订单列表失败:', error);
       throw error;
@@ -479,10 +672,8 @@ export const apiService = {
 
   async getOrderDetails(orderId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/orders/${orderId}`, {
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -493,13 +684,13 @@ export const apiService = {
 
   async shipOrder(orderId: string, trackingNumber: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/ship`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/orders/${orderId}/ship`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ trackingNumber }),
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
@@ -510,15 +701,27 @@ export const apiService = {
 
   async deliverOrder(orderId: string): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/deliver`, {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/admin/orders/${orderId}/deliver`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include'
       });
       return handleApiResponse<any>(response);
     } catch (error) {
       console.error('标记订单为已收货失败:', error);
+      throw error;
+    }
+  },
+
+  // 退出登录（清理后端cookie）
+  async logout(): Promise<any> {
+    try {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      return handleApiResponse<any>(response);
+    } catch (error) {
+      console.error('退出登录失败:', error);
       throw error;
     }
   },

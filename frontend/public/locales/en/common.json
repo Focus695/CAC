@@ -10,9 +10,9 @@
     "encryptedConnection": "Encrypted Connection · Secure Payment",
     "pleaseFillAllFields": "Please fill in all required fields",
     "orderProcessingFailed": "Order processing failed, please try again later",
-    "thankYou": "Thank you for your purchase",
-    "orderSuccessMessage": "Your items will be shipped soon. May this fragrance accompany you through peaceful times.",
-    "backToHome": "Back to Home"
+    "thankYou": "Thank You",
+    "orderSuccessMessage": "Your handcrafted treasures will be carefully packaged and shipped soon. May they bring peace and mindfulness to your daily rituals.",
+    "backToHome": "Continue Shopping"
   },
   "order": {
     "orderNumber": "Order Number",

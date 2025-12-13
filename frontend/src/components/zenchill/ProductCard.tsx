@@ -47,7 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="absolute inset-0 bg-sandalwood/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-3 items-center justify-center backdrop-blur-[1px]">
            <div className="bg-white/90 text-sandalwood px-6 py-2 rounded-full font-serif text-sm flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hidden md:flex">
              <Eye size={16} />
-             <span>查看详情</span>
+             <span>View Details</span>
            </div>
            
            <AddToCartButton
@@ -83,7 +83,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
              </span>
            </div>
            <div className="text-base md:text-lg font-serif text-cinnabar font-medium">
-             ¥ {product.price}
+             $ {product.price}
            </div>
         </div>
       </div>

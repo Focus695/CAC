@@ -7,6 +7,18 @@ import { Toaster } from 'react-hot-toast'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { apiService } from '@/services/api'
+import { 
+  LayoutDashboard, 
+  Users, 
+  Package, 
+  ShoppingCart, 
+  LogOut, 
+  Menu,
+  ChevronRight,
+  User
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,30 +30,63 @@ export default function AdminLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [loading, setLoading] = useState(true)
+  const [adminUser, setAdminUser] = useState<any>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
-    // Check if user is authenticated
-    let adminToken = localStorage.getItem('adminToken')
+    async function checkAuthentication() {
+      try {
+        // Check authentication by calling a protected API endpoint (cookie-based)
+        const profile = await apiService.getProfile()
+        const isAdmin = profile?.role === 'ADMIN'
 
-    // Also validate adminToken if it exists (should be a string, not "undefined")
-    if (adminToken === "undefined") {
-      localStorage.removeItem('adminToken')
-      adminToken = null
+        if (pathname === '/admin/login' && isAdmin) {
+          // If on login page and already authenticated, redirect to dashboard
+          router.replace('/admin/dashboard');
+        } else if (pathname !== '/admin/login' && !isAdmin) {
+          // If not admin, redirect to admin login
+          router.replace('/admin/login');
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        // Network error or API issue, redirect to login
+        if (pathname !== '/admin/login') {
+          router.replace('/admin/login');
+        } else {
+          setLoading(false);
+        }
+      }
     }
 
-    // If not on login page and not authenticated, redirect to login
-    if (pathname !== '/admin/login' && !adminToken) {
-      router.replace('/admin/login')
-    } else if (pathname === '/admin/login' && adminToken) {
-      // If on login page and already authenticated, redirect to dashboard
-      router.replace('/admin/dashboard')
-    } else {
-      setLoading(false)
-    }
+    checkAuthentication();
   }, [router, pathname])
 
+  // Fetch admin user data
+  useEffect(() => {
+    async function fetchAdminUser() {
+      try {
+        const profile = await apiService.getProfile()
+        if (profile?.role === 'ADMIN') setAdminUser(profile)
+      } catch (error) {
+        console.error('Failed to fetch admin user data:', error);
+      }
+    }
+
+    if (pathname !== '/admin/login' && !loading) {
+      fetchAdminUser();
+    }
+  }, [pathname, loading]);
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-500 font-medium">Loading admin panel...</p>
+        </div>
+      </div>
+    )
   }
 
   // Render the login page without the admin layout
@@ -56,112 +101,114 @@ export default function AdminLayout({
     )
   }
 
+  const navItems = [
+    { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/users', label: 'User Management', icon: Users },
+    { href: '/admin/products', label: 'Products', icon: Package },
+    { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  ]
+
   // Render admin layout for authenticated users
-  const adminUser = localStorage.getItem('adminUser');
-  let parsedAdminUser = null;
-
-  try {
-    parsedAdminUser = adminUser ? JSON.parse(adminUser) : null;
-  } catch (error) {
-    // If parsing fails, clear the invalid data
-    localStorage.removeItem('adminUser');
-    parsedAdminUser = null;
-  }
-
   return (
-    <div className={`${inter.className} min-h-screen`}>
+    <div className={`${inter.className} min-h-screen bg-gray-50/50`}>
       <Providers>
-        <div className="min-h-screen bg-gray-100">
+        <div className="flex min-h-screen">
             {/* Sidebar */}
-            <aside className="fixed top-0 left-0 w-64 bg-white shadow-md h-full">
-              <div className="p-4 border-b">
-                <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
-              </div>
+            <aside 
+              className={`fixed top-0 left-0 z-40 h-screen transition-transform bg-white border-r border-gray-200 ${
+                sidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'
+              } lg:translate-x-0 lg:static lg:block`}
+            >
+              <div className="h-full px-3 py-4 overflow-y-auto">
+                <div className="flex items-center gap-2 px-2 mb-8 mt-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">A</span>
+                  </div>
+                  <span className="text-xl font-bold text-gray-900">Admin Panel</span>
+                </div>
 
-              {/* Navigation Menu */}
-              <nav className="p-4">
-                <ul className="space-y-2">
-                  <li>
-                    <Link
-                      href="/admin/dashboard"
-                      className="block p-2 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600"
+                <nav className="space-y-1">
+                  {navItems.map((item) => {
+                    const isActive = pathname === item.href
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center px-3 py-2.5 rounded-lg group transition-colors ${
+                          isActive 
+                            ? 'bg-blue-50 text-blue-700' 
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        <item.icon className={`w-5 h-5 mr-3 transition-colors ${
+                          isActive ? 'text-blue-700' : 'text-gray-500 group-hover:text-gray-900'
+                        }`} />
+                        <span className="font-medium">{item.label}</span>
+                        {isActive && <ChevronRight className="w-4 h-4 ml-auto text-blue-700" />}
+                      </Link>
+                    )
+                  })}
+                </nav>
+
+                <div className="absolute bottom-4 left-0 w-full px-3">
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                        {adminUser?.username?.[0]?.toUpperCase() || 'A'}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {adminUser?.username || 'Admin'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {adminUser?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100"
+                      onClick={async () => {
+                        try {
+                          await apiService.logout();
+                        } catch (error) {
+                          console.error('Logout failed:', error);
+                        } finally {
+                          router.replace('/admin/login');
+                        }
+                      }}
                     >
-                      Dashboard
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/admin/users"
-                      className="block p-2 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600"
-                    >
-                      User Management
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/admin/products"
-                      className="block p-2 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600"
-                    >
-                      Product Management
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/admin/orders"
-                      className="block p-2 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600"
-                    >
-                      Order Management
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </aside>
 
             {/* Main Content */}
-            <main className="ml-64 p-8">
-              {/* Top Bar */}
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  {/* Breadcrumb */}
-                  <nav className="text-sm text-gray-500">
-                    <ol className="list-none p-0 inline-flex">
-                      <li className="flex items-center">
-                        <Link href="/admin" className="text-gray-500 hover:text-gray-700">Admin</Link>
-                        <span className="mx-2">/</span>
-                      </li>
-                      {/* Breadcrumb items will be dynamically added by individual pages */}
-                    </ol>
-                  </nav>
-                </div>
-
-                {/* User Profile */}
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600">{parsedAdminUser?.username || parsedAdminUser?.email || 'Admin User'}</span>
-                  <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                  <button
-                    onClick={() => {
-                      // Remove tokens and user info from localStorage
-                      localStorage.removeItem('adminToken');
-                      localStorage.removeItem('adminUser');
-                      // Redirect to login page
-                      router.replace('/admin/login');
-                    }}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
+            <main className="flex-1 lg:ml-0 min-w-0">
+              {/* Mobile Header */}
+              <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 rounded-lg hover:bg-gray-100"
                   >
-                    Logout
+                    <Menu className="w-6 h-6 text-gray-600" />
                   </button>
+                  <span className="font-bold text-gray-900">Admin Panel</span>
                 </div>
               </div>
 
-              {/* Page Content */}
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="p-4 md:p-8 max-w-7xl mx-auto">
                 {children}
               </div>
             </main>
           </div>
 
           <Toaster position="top-right" />
-        </Providers>
+      </Providers>
     </div>
   )
 }

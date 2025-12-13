@@ -8,6 +8,11 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { AuditLogger } from './common/logger/audit-logger';
+import * as express from 'express';
+import { join } from 'path';
+import { UPLOADS_DIRNAME, UPLOADS_ROUTE_PREFIX } from './modules/admin/uploads.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,26 +35,11 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Create default admin user
-  const usersService = app.get(require('./modules/users/users.service').UsersService);
-  const adminEmail = 'zenchill@example.com';
-  const adminPassword = 'zenchill888';
+  // Serve uploaded images
+  app.use(UPLOADS_ROUTE_PREFIX, express.static(join(process.cwd(), UPLOADS_DIRNAME)));
 
-  const existingAdmin = await usersService.findByEmail(adminEmail);
-  if (!existingAdmin) {
-    const hashedPassword = await require('bcryptjs').hash(adminPassword, 10);
-    await usersService.create({
-      email: adminEmail,
-      password: hashedPassword,
-      username: 'zenchill',
-      role: 'ADMIN', // Use the existing ADMIN role from the schema
-    });
-    console.log('Default admin user created:');
-    console.log(`Username: zenchill`);
-    console.log(`Email: ${adminEmail}`);
-    console.log(`Password: ${adminPassword}`);
-    console.log('Role: SUPER ADMIN');
-  }
+  // Default admin user creation removed for security reasons
+  // Use API or database migration to create admin users
 
   // Validation
   app.useGlobalPipes(
@@ -65,6 +55,7 @@ async function bootstrap() {
 
   // Global interceptor and filter
   app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalInterceptors(new AuditInterceptor(new AuditLogger()));
   app.useGlobalFilters(new HttpExceptionFilter());
 
   // Swagger API Documentation

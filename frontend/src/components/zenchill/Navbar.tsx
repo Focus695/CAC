@@ -82,10 +82,10 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onTabChange, onO
         {/* Logo */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-cinnabar flex items-center justify-center text-white font-serif font-bold">
-            禅
+            Z
           </div>
           <span className="text-xl font-serif font-bold tracking-widest text-cinnabar">
-            禅韵香舍
+            ZENCHILL
           </span>
         </div>
 
@@ -96,12 +96,12 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onTabChange, onO
             <div className="flex items-center gap-2">
               <Link href="/auth/login">
                 <Button variant="ghost" size="sm">
-                  登录
+                  Sign In
                 </Button>
               </Link>
               <Link href="/auth/register">
                 <Button size="sm" className="bg-cinnabar text-white hover:bg-cinnabar/90">
-                  注册
+                  Sign Up
                 </Button>
               </Link>
             </div>
@@ -135,7 +135,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onTabChange, onO
                     }}
                     className="w-full px-4 py-2 text-sm text-sandalwood hover:bg-stone-100 transition-colors text-left"
                   >
-                    订单管理
+                    My Orders
                   </button>
                   <button
                     onClick={() => {
@@ -144,13 +144,13 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onTabChange, onO
                     }}
                     className="w-full px-4 py-2 text-sm text-sandalwood hover:bg-stone-100 transition-colors text-left"
                   >
-                    设置
+                    Settings
                   </button>
                   <button
                     onClick={logout}
                     className="w-full px-4 py-2 text-sm text-cinnabar hover:bg-stone-100 transition-colors text-left border-t border-stone-100 mt-2"
                   >
-                    退出登录
+                    Sign Out
                   </button>
                 </div>
               </div>

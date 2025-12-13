@@ -8,27 +8,33 @@ async function findBackendPort(): Promise<number> {
 
   for (let port = minPort; port <= maxPort; port++) {
     try {
-      // 尝试HEAD请求到根路径
+      // 关键：不要用 "/" 或 HEAD 探测（Next.js 前端 3000 也会返回 200，容易误判为后端）
+      // 使用“后端特征响应”探测：/products 在后端会返回 JSON，而前端通常是 HTML
       try {
-        await axios.head(`${baseUrl}:${port}/`, {
-          timeout: 100 // 100ms超时
+        const resp = await axios.get(`${baseUrl}:${port}/products`, {
+          timeout: 200,
+          // axios 默认会跟随并解析；这里用头判断即可
+          validateStatus: () => true,
         });
-        return port;
+        const contentType = String(resp.headers?.['content-type'] || '');
+        if (resp.status >= 200 && resp.status < 300 && contentType.includes('application/json')) {
+          return port;
+        }
       } catch {
-        // 如果根路径HEAD请求失败，尝试其他常见路径
+        // ignore
       }
 
-      // 尝试GET请求到健康检查或API路径
-      const apiPaths = ['/api', '/health', '/status', '/docs'];
-      for (const path of apiPaths) {
-        try {
-          await axios.get(`${baseUrl}:${port}${path}`, {
-            timeout: 100 // 100ms超时
-          });
+      // 兜底：Swagger 文档
+      try {
+        const resp = await axios.get(`${baseUrl}:${port}/docs`, {
+          timeout: 200,
+          validateStatus: () => true,
+        });
+        if (resp.status >= 200 && resp.status < 300) {
           return port;
-        } catch {
-          // 如果失败，尝试下一个路径
         }
+      } catch {
+        // ignore
       }
     } catch (error) {
       // 端口不可用，继续尝试
@@ -40,7 +46,8 @@ async function findBackendPort(): Promise<number> {
 }
 
 // 创建API实例，先使用默认端口
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// 注意：后端未设置全局 /api 前缀
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -56,7 +63,7 @@ export const api = axios.create({
   if (!process.env.NEXT_PUBLIC_API_URL) {
     try {
       const port = await findBackendPort();
-      const newBaseURL = `http://localhost:${port}/api`;
+      const newBaseURL = `http://localhost:${port}`;
       api.defaults.baseURL = newBaseURL;
       console.log(`已自动检测到后端端口: ${port}`);
     } catch (error) {
@@ -65,12 +72,9 @@ export const api = axios.create({
   }
 })();
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token (已改为使用httpOnly cookie)
 api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  // 不再从localStorage获取token，token将通过cookie自动传递
   return config;
 });
 
@@ -79,9 +83,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized - clear token and redirect
+      // Handle unauthorized - redirect to login
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
+        // 不再从localStorage删除token，token将通过cookie自动过期
         window.location.href = '/login';
       }
     }

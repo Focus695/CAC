@@ -71,14 +71,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, isOpen
             </div>
             <h2 className="text-3xl lg:text-4xl font-serif text-sandalwood mb-4">{product.name}</h2>
             <div className="flex items-baseline gap-4">
-              <span className="text-2xl text-cinnabar font-serif">¥ {product.price}</span>
-              <span className="text-sm text-stone-400 line-through">¥ {Math.round(product.price * 1.2)}</span>
+              <span className="text-2xl text-cinnabar font-serif">$ {product.price}</span>
+              <span className="text-sm text-stone-400 line-through">$ {Math.round(product.price * 1.2)}</span>
             </div>
           </div>
 
           {/* Mobile Price Header (Visible only on mobile) */}
           <div className="md:hidden mb-6 flex justify-between items-baseline border-b border-stone-100 pb-4">
-            <span className="text-2xl text-cinnabar font-serif font-medium">¥ {product.price}</span>
+            <span className="text-2xl text-cinnabar font-serif font-medium">$ {product.price}</span>
             <span className="px-2 py-0.5 border border-stone-300 text-[10px] text-stone-500 rounded-full">{product.category}</span>
           </div>
 
@@ -89,11 +89,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, isOpen
             <div>
               <h3 className="flex items-center gap-2 font-serif text-base md:text-lg text-sandalwood mb-2 md:mb-3">
                 <Scroll size={16} className="text-stone-400" />
-                <span>雅物描述</span>
+                <span>Description</span>
               </h3>
               <p className="text-stone-600 leading-relaxed font-light text-justify text-sm md:text-base">
                 {product.description}
-                此物源自天然，经匠人手工打磨，保留了材质最原始的灵性。无论是置于案头，还是随身佩戴，皆能感受到那份来自山川草木的静谧力量。
+                Each piece is sourced from nature and handcrafted by skilled artisans, preserving the authentic essence of the materials. Whether displayed or worn, you'll feel the tranquil energy from natural botanicals.
               </p>
             </div>
 
@@ -101,11 +101,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, isOpen
             <div>
               <h3 className="flex items-center gap-2 font-serif text-base md:text-lg text-sandalwood mb-2 md:mb-3">
                 <Wind size={16} className="text-stone-400" />
-                <span>养生功效</span>
+                <span>Benefits</span>
               </h3>
               <div className="bg-stone-100/50 p-3 md:p-4 rounded-sm border-l-2 border-cinnabar">
                 <p className="text-stone-700 font-serif text-sm md:text-base">{product.benefits}</p>
-                <p className="text-[10px] md:text-xs text-stone-400 mt-2">* 传统文化寓意，非医疗建议。</p>
+                <p className="text-[10px] md:text-xs text-stone-400 mt-2">* Traditional wellness properties, not medical advice.</p>
               </div>
             </div>
 
@@ -113,20 +113,20 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, isOpen
             <div>
                <h3 className="flex items-center gap-2 font-serif text-base md:text-lg text-sandalwood mb-2 md:mb-3">
                 <Star size={16} className="text-stone-400" />
-                <span>匠心工艺</span>
+                <span>Craftsmanship</span>
               </h3>
               <ul className="space-y-2 text-xs md:text-sm text-stone-600 font-light">
                 <li className="flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-stone-300 mt-1.5"></span>
-                  <span>严选原产地老料，油性充足，香韵纯正。</span>
+                  <span>Carefully selected botanicals from sustainable sources, ensuring purity and authenticity.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-stone-300 mt-1.5"></span>
-                  <span>数十道工序手工打磨，触感温润如玉。</span>
+                  <span>Handcrafted through dozens of traditional steps, resulting in a smooth, refined finish.</span>
                 </li>
                  <li className="flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-stone-300 mt-1.5"></span>
-                  <span>配饰采用天然矿石与纯银，古朴典雅。</span>
+                  <span>Natural materials and heritage techniques honored in every piece.</span>
                 </li>
               </ul>
             </div>

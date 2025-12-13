@@ -36,7 +36,8 @@
       "Bash(npx prisma migrate reset --force)",
       "Bash(node check-user-role.ts)",
       "Bash(npx prisma migrate dev --name init)",
-      "Bash(npm run prisma:seed:*)"
+      "Bash(npm run prisma:seed:*)",
+      "Bash(npx kill-port:*)"
     ],
     "deny": [],
     "ask": []

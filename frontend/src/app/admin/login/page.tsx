@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
+import { apiService } from '@/services/api'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('zenchill@example.com')
@@ -23,32 +24,21 @@ export default function AdminLogin() {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:3001/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
+      await apiService.login({ email, password })
 
-      if (!response.ok) {
-        throw new Error('Invalid email or password')
+      // 立即校验是否为管理员，避免“闪一下又被踢回”的体验
+      const profile = await apiService.getProfile()
+      if (profile?.role !== 'ADMIN') {
+        try {
+          await apiService.logout()
+        } catch {
+          // ignore
+        }
+        throw new Error('该账号不是管理员，无法登录后台')
       }
 
-      const data = await response.json()
-
-      // Store token and user information
-      // Extract the actual data from the wrapped response
-      const responseData = data.data;
-
-      // Store token and user information
-      localStorage.setItem('adminToken', responseData.access_token);
-      localStorage.setItem('adminUser', JSON.stringify(responseData.user));
-
       toast.success('Login successful!')
-
-      // Set login success state - navigation will be handled by the useEffect
-      setIsLoggedIn(true);
+      setIsLoggedIn(true)
     } catch (error: any) {
       toast.error(error.message)
     } finally {

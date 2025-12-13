@@ -1,18 +1,18 @@
 {
   "checkout": {
-    "shippingAddress": "收货雅址",
-    "confirmPayment": "确认支付",
-    "orderSummary": "雅物清单",
-    "firstName": "姓",
-    "lastName": "名",
-    "phone": "联系电话",
-    "address": "详细地址",
-    "encryptedConnection": "加密连接 · 安全支付",
-    "pleaseFillAllFields": "请填写所有必填字段",
-    "orderProcessingFailed": "订单处理失败，请稍后重试",
-    "thankYou": "感谢您的惠顾",
-    "orderSuccessMessage": "您的雅物将很快寄出。愿此香韵伴您度过宁静时光。",
-    "backToHome": "返回首页"
+    "shippingAddress": "Shipping Address",
+    "confirmPayment": "Confirm Payment",
+    "orderSummary": "Order Summary",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone Number",
+    "address": "Detailed Address",
+    "encryptedConnection": "Encrypted Connection · Secure Payment",
+    "pleaseFillAllFields": "Please fill in all required fields",
+    "orderProcessingFailed": "Order processing failed, please try again later",
+    "thankYou": "Thank You",
+    "orderSuccessMessage": "Your handcrafted treasures will be carefully packaged and shipped soon. May they bring peace and mindfulness to your daily rituals.",
+    "backToHome": "Continue Shopping"
   },
   "order": {
     "orderNumber": "订单号",

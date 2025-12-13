@@ -1,11 +1,11 @@
 
 export enum Category {
-  AGARWOOD = '沉香',
-  SANDALWOOD = '檀香',
-  JADE = '玉石',
-  TEA_WARE = '茶器',
-  BURNER = '香具',
-  ACCESSORY = '雅玩'
+  MEDITATION_BEADS = 'Meditation Beads',
+  INCENSE = 'Incense',
+  CANDLES = 'Candles',
+  COMBS = 'Wooden Combs',
+  GIFT_SETS = 'Gift Sets',
+  ACCESSORIES = 'Accessories'
 }
 
 export interface Product {

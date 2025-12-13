@@ -17,7 +17,7 @@ export default function LoginPage() {
     password: '',
   });
 
-  const { setUser, setToken } = useUser();
+  const { setUser } = useUser();
   const { addToCart } = useCart();
 
   async function onSubmit(e: React.FormEvent) {
@@ -27,41 +27,51 @@ export default function LoginPage() {
       setLoginError(null);
 
       if (!formData.email || !formData.password) {
-        setLoginError('请填写邮箱和密码');
+        setLoginError('Please enter your email and password');
         return;
       }
 
       const response = await apiService.login(formData);
 
-      // 兼容后端 TransformInterceptor 包裹的返回结构，apiService 已自动解包 data
-      // 使用UserContext管理用户状态
+      // Compatible with backend TransformInterceptor wrapped return structure, apiService has automatically unpacked data
+      // Use UserContext to manage user state
       setUser(response.user);
-      setToken(response.access_token);
 
-      // 显示成功提示
-      toast.success('登录成功！', { duration: 3000 });
+      // Show success message
+      toast.success('Login successful!', { duration: 3000 });
 
-      // 检查是否有未完成的购物车添加操作
+      // Check if there are any pending cart add operations
       const pendingCartItem = localStorage.getItem('pendingCartItem');
       if (pendingCartItem) {
         try {
           const { productId, quantity, productName } = JSON.parse(pendingCartItem);
           await addToCart(productId, quantity);
-          toast.success(`${productName} 已自动加入购物车！`, { duration: 3000 });
-          // 清除本地存储的未完成操作
+          toast.success(`${productName} has been automatically added to your cart!`, { duration: 3000 });
+          // Clear pending operations from localStorage
           localStorage.removeItem('pendingCartItem');
         } catch (error) {
-          console.error('自动添加商品到购物车失败:', error);
+          console.error('Failed to automatically add product to cart:', error);
         }
       }
 
-      // 延迟跳转到首页
+      // Delay redirect to homepage
       setTimeout(() => {
         router.push('/');
       }, 1000);
     } catch (error: any) {
-      console.error('登录失败:', error);
-      setLoginError('邮箱或密码错误');
+      console.error('Login failed:', error);
+      // Display different prompts based on error type
+      const errorMessage = error.message || 'Login failed, please try again later';
+
+      if (errorMessage.includes('Unauthorized')) {
+        setLoginError('Invalid email or password');
+      } else if (errorMessage.includes('API request timeout') || errorMessage.includes('API请求超时')) {
+        setLoginError('Network request timeout, please try again later');
+      } else if (errorMessage.includes('email must be an email')) {
+        setLoginError('Please enter a valid email address');
+      } else {
+        setLoginError(`Login failed: ${errorMessage}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -82,9 +92,9 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-serif font-bold text-cinnabar tracking-widest">登录账户</h1>
+          <h1 className="text-3xl font-serif font-bold text-cinnabar tracking-widest">Sign In</h1>
           <p className="mt-3 text-sm text-sandalwood">
-            没有账户？ <Link href="/auth/register" className="font-medium text-cinnabar hover:text-cinnabar/80 transition-colors">注册</Link>
+            Don't have an account? <Link href="/auth/register" className="font-medium text-cinnabar hover:text-cinnabar/80 transition-colors">Register</Link>
           </p>
         </div>
 
@@ -97,7 +107,7 @@ export default function LoginPage() {
 
           <form onSubmit={onSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-sandalwood mb-2">邮箱地址</label>
+              <label className="block text-sm font-medium text-sandalwood mb-2">Email Address</label>
               <input
                 type="email"
                 placeholder="name@example.com"
@@ -109,7 +119,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-sandalwood mb-2">密码</label>
+              <label className="block text-sm font-medium text-sandalwood mb-2">Password</label>
               <input
                 type="password"
                 placeholder="••••••"
@@ -125,7 +135,7 @@ export default function LoginPage() {
               className="w-full py-3 px-4 bg-cinnabar hover:bg-cinnabar/90 text-white font-medium rounded-lg shadow-md transition-colors duration-300 font-serif tracking-wide"
               disabled={isLoading}
             >
-              {isLoading ? '登录中...' : '登录'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         </div>

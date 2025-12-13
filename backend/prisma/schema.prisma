@@ -38,6 +38,8 @@ model Product {
   categoryId        String
   isActive          Boolean            @default(true)
   isFeatured        Boolean            @default(false)
+  publishedAt       DateTime?
+  unpublishedAt     DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   craftsmanship_en  String?
@@ -50,6 +52,12 @@ model Product {
   mainImage         String?
   name_en           String
   name_zh           String
+  // Dynamic product introduction sections (0~3).
+  // Stored as JSON array, e.g.
+  // [
+  //   { "title_zh": "...", "title_en": "...", "content_zh": "...", "content_en": "...", "order": 1 }
+  // ]
+  sections          Json?              @db.JsonB
   cartItems         CartItem[]
   orderItems        OrderItem[]
   attributes        ProductAttribute[]

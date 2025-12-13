@@ -131,14 +131,14 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                       <p className="font-serif text-stone-800">{item.name}</p>
                       <p className="text-stone-500">x{item.quantity}</p>
                     </div>
-                    <div className="font-serif text-stone-700">¥{item.price * item.quantity}</div>
+                    <div className="font-serif text-stone-700">${item.price * item.quantity}</div>
                   </div>
                 ))}
               </div>
               <div className="mt-8 pt-6 border-t border-stone-300">
                  <div className="flex justify-between text-lg font-serif font-bold text-cinnabar">
-                   <span>总计</span>
-                   <span>¥ {total}</span>
+                   <span>Total</span>
+                   <span>$ {total}</span>
                  </div>
               </div>
             </div>
@@ -161,7 +161,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                        value={formData.firstName}
                        onChange={handleChange}
                        className="w-full bg-transparent border-b border-stone-300 focus:border-cinnabar outline-none py-2 font-serif text-sandalwood transition-colors"
-                       placeholder="赵" />
+                       placeholder="John" />
                    </div>
                    <div className="space-y-1">
                      <label className="text-xs text-stone-500 uppercase tracking-wider">{t('checkout.lastName')}</label>
@@ -172,7 +172,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                        value={formData.lastName}
                        onChange={handleChange}
                        className="w-full bg-transparent border-b border-stone-300 focus:border-cinnabar outline-none py-2 font-serif text-sandalwood transition-colors"
-                       placeholder="钱孙" />
+                       placeholder="Doe" />
                    </div>
                 </div>
 
@@ -189,14 +189,14 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
 
                 <div className="space-y-1">
                    <label className="text-xs text-stone-500 uppercase tracking-wider">{t('checkout.address')}</label>
-                   <input
+                     <input
                      required
                      type="text"
                      name="address1"
                      value={formData.address1}
                      onChange={handleChange}
                      className="w-full bg-transparent border-b border-stone-300 focus:border-cinnabar outline-none py-2 font-serif text-sandalwood transition-colors"
-                     placeholder="省 / 市 / 区 / 街道" />
+                     placeholder="Street address" />
                 </div>
 
                 <div className="pt-8">
@@ -213,7 +213,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
         {step === 'processing' && (
           <div className="h-96 flex flex-col items-center justify-center p-8 text-center space-y-6">
             <div className="w-16 h-16 border-4 border-stone-200 border-t-cinnabar rounded-full animate-spin"></div>
-            <p className="font-serif text-xl text-sandalwood animate-pulse">正在确认香缘...</p>
+            <p className="font-serif text-xl text-sandalwood animate-pulse">Processing your order...</p>
           </div>
         )}
 
@@ -223,7 +223,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
             <div className="relative mb-8">
                <div className="w-32 h-32 border-4 border-cinnabar rounded-md flex items-center justify-center rotate-3 opacity-0 animate-fade-in-up" style={{animationDelay: '0.2s', animationFillMode: 'forwards'}}>
                   <div className="w-28 h-28 border-2 border-cinnabar rounded-sm flex items-center justify-center">
-                     <span className="font-serif text-cinnabar text-5xl font-bold writing-vertical-rl">已结缘</span>
+                     <span className="font-serif text-cinnabar text-3xl font-bold">PAID</span>
                   </div>
                </div>
                <div className="absolute -bottom-2 -right-6 text-cinnabar opacity-0 animate-fade-in-up" style={{animationDelay: '0.5s', animationFillMode: 'forwards'}}>

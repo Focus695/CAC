@@ -46,7 +46,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     }
 
     if (stock <= 0) {
-      toast.error('商品已售罄', {
+      toast.error('Product out of stock', {
         position: 'bottom-right',
         duration: 5000
       });
@@ -56,20 +56,20 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     try {
       setLoading(true);
       await addToCart(productId, defaultQuantity);
-      toast.success(`${productName} 已添加到购物车！`, {
+      toast.success(`${productName} added to cart!`, {
         position: 'bottom-right',
         duration: 3000
       });
     } catch (err: any) {
       // Handle different types of errors
-      let errorMessage = '添加商品到购物车失败';
+      let errorMessage = 'Failed to add product to cart';
 
       if (err.message) {
         // Extract user-friendly message from error
         if (err.message.includes('Not enough stock')) {
-          errorMessage = '库存不足，无法添加此商品';
+          errorMessage = 'Not enough stock available';
         } else if (err.message.includes('Product not found')) {
-          errorMessage = '商品不存在';
+          errorMessage = 'Product not found';
         } else {
           errorMessage = err.message;
         }
@@ -99,7 +99,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
             : 'bg-[rgb(142_40_0)] hover:bg-[rgb(115_32_0)] text-white'
         } ${loading ? 'opacity-70 cursor-wait' : ''}`}
       >
-        {loading ? '添加中...' : stock <= 0 ? '已售罄' : '加入购物车'}
+        {loading ? 'Adding...' : stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
       </button>
 
 
@@ -120,9 +120,9 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
           >
             {/* Header */}
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-serif text-sandalwood mb-2">请先登录</h2>
+              <h2 className="text-2xl font-serif text-sandalwood mb-2">Please Sign In</h2>
               <p className="text-stone-500 font-light">
-                您需要登录后才能将商品加入购物车
+                You need to sign in to add items to your cart
               </p>
             </div>
 
@@ -132,13 +132,13 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
                 onClick={handleLoginRedirect}
                 className="w-full bg-[rgb(142_40_0)] text-white py-3 font-serif text-lg tracking-widest hover:bg-[rgb(115_32_0)] transition-all duration-300 shadow-lg"
               >
-                前往登录
+                Sign In
               </button>
               <button
                 onClick={() => setShowLoginModal(false)}
                 className="w-full bg-white border-2 border-stone-300 text-sandalwood py-3 font-serif text-lg tracking-widest hover:border-cinnabar hover:text-cinnabar transition-all duration-300"
               >
-                取消
+                Cancel
               </button>
             </div>
           </div>

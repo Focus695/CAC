@@ -1,20 +1,21 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiService } from '@/services/api';
 
 interface User {
   id: string;
   email: string;
   username?: string;
+  role?: string;
 }
 
 interface UserContextType {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  token: string | null;
-  setToken: React.Dispatch<React.SetStateAction<string | null>>;
   isAuthenticated: boolean;
-  logout: () => void;
+  refreshProfile: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 // Create the context with a default value
@@ -23,54 +24,51 @@ export const UserContext = createContext<UserContextType | undefined>(undefined)
 // Create a provider component
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const isAuthenticated = !!user && !!token;
+  const isAuthenticated = !!user;
 
-  // Initialize from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-
-      if (storedToken && storedUser) {
-        try {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-        } catch (error) {
-          console.error('Failed to parse user data from localStorage:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
+  const refreshProfile = async () => {
+    try {
+      // Restore login state via backend cookie session
+      const profile = await apiService.getProfile();
+      // Backend JwtStrategy returns { userId, email, role }, so we need a compatibility mapping here
+      if (profile && typeof profile === 'object') {
+        setUser({
+          id: (profile.userId || profile.id) as string,
+          email: profile.email,
+          role: profile.role,
+          username: profile.username,
+        });
+      } else {
+        setUser(null);
       }
+    } catch {
+      setUser(null);
     }
+  };
+
+  // Initialize: attempt to restore session from cookie
+  useEffect(() => {
+    refreshProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update localStorage when user or token changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (user && token) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-    }
-  }, [user, token]);
-
   // Logout function
-  const logout = () => {
-    setUser(null);
-    setToken(null);
+  const logout = async () => {
+    try {
+      await apiService.logout();
+    } catch {
+      // 即便后端退出失败，也清理本地状态，避免卡死在“伪登录”
+    } finally {
+      setUser(null);
+    }
   };
 
   // Create context value
   const contextValue: UserContextType = {
     user,
     setUser,
-    token,
-    setToken,
     isAuthenticated,
+    refreshProfile,
     logout,
   };
 

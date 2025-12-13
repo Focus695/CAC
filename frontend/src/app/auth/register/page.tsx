@@ -17,7 +17,7 @@ export default function RegisterPage() {
     confirmPassword: '',
   });
 
-  const { setUser, setToken } = useUser();
+  const { setUser } = useUser();
   const { addToCart } = useCart();
 
   async function onSubmit(e: React.FormEvent) {
@@ -26,51 +26,63 @@ export default function RegisterPage() {
       setIsLoading(true);
 
       if (!formData.email || !formData.password || !formData.confirmPassword) {
-        toast.error('请填写完整信息');
+        toast.error('Please fill in all fields');
         return;
       }
 
-      // 验证两次密码是否一致
+      // Verify that the two passwords match
       if (formData.password !== formData.confirmPassword) {
-        toast.error('两次输入的密码不一致，请重新输入');
+        toast.error('Passwords do not match, please try again');
         return;
       }
 
-      // 仅传递email和password给API
+      // Only pass email and password to the API
       const response = await apiService.register({
         email: formData.email,
         password: formData.password,
       });
 
-      // 兼容后端 TransformInterceptor 包裹的返回结构，apiService 已自动解包 data
-      // 使用UserContext管理用户状态
+      // Compatible with backend TransformInterceptor wrapped return structure, apiService has automatically unpacked data
+      // Use UserContext to manage user state
       setUser(response.user);
-      setToken(response.access_token);
 
-      // 显示成功提示
-      toast.success('注册成功！', { duration: 3000 });
+      // Show success message
+      toast.success('Registration successful!', { duration: 3000 });
 
-      // 检查是否有未完成的购物车添加操作
+      // Check if there are any pending cart add operations
       const pendingCartItem = localStorage.getItem('pendingCartItem');
       if (pendingCartItem) {
         try {
           const { productId, quantity, productName } = JSON.parse(pendingCartItem);
           await addToCart(productId, quantity);
-          toast.success(`${productName} 已自动加入购物车！`, { duration: 3000 });
-          // 清除本地存储的未完成操作
+          toast.success(`${productName} has been automatically added to your cart!`, { duration: 3000 });
+          // Clear pending operations from localStorage
           localStorage.removeItem('pendingCartItem');
         } catch (error) {
-          console.error('自动添加商品到购物车失败:', error);
+          console.error('Failed to automatically add product to cart:', error);
         }
       }
 
-      // 延迟跳转到首页
+      // Delay redirect to homepage
       setTimeout(() => {
         router.push('/');
       }, 1000);
     } catch (error: any) {
-      console.error('注册失败:', error);
-      toast.error('注册失败，请检查邮箱是否已被使用');
+      console.error('Registration failed:', error);
+      // Display different prompts based on error type
+      const errorMessage = error.message || 'Registration failed, please try again later';
+
+      if (errorMessage.includes('Email already registered') || errorMessage.includes('邮箱已经被注册')) {
+        toast.error('Registration failed, please check if the email is already in use');
+      } else if (errorMessage.includes('API request timeout') || errorMessage.includes('API请求超时')) {
+        toast.error('Network request timeout, please try again later');
+      } else if (errorMessage.includes('password must be longer than or equal to 6 characters')) {
+        toast.error('Registration failed, password must be at least 6 characters');
+      } else if (errorMessage.includes('email must be an email')) {
+        toast.error('Registration failed, please enter a valid email address');
+      } else {
+        toast.error(`Registration failed: ${errorMessage}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -91,16 +103,16 @@ export default function RegisterPage() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-serif font-bold text-cinnabar tracking-widest">注册账户</h1>
+          <h1 className="text-3xl font-serif font-bold text-cinnabar tracking-widest">Create an Account</h1>
           <p className="mt-3 text-sm text-sandalwood">
-            已有账户？ <Link href="/auth/login" className="font-medium text-cinnabar hover:text-cinnabar/80 transition-colors">登录</Link>
+            Already have an account? <Link href="/auth/login" className="font-medium text-cinnabar hover:text-cinnabar/80 transition-colors">Sign In</Link>
           </p>
         </div>
 
         <div className="bg-paper rounded-xl shadow-lg border border-stone-200 p-8">
           <form onSubmit={onSubmit} className="space-y-6">
               <div>
-              <label className="block text-sm font-medium text-sandalwood mb-2">邮箱地址</label>
+              <label className="block text-sm font-medium text-sandalwood mb-2">Email Address</label>
               <input
                 type="email"
                 placeholder="name@example.com"
@@ -112,7 +124,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-sandalwood mb-2">密码</label>
+              <label className="block text-sm font-medium text-sandalwood mb-2">Password</label>
               <input
                 type="password"
                 placeholder="••••••"
@@ -124,7 +136,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-sandalwood mb-2">确认密码 <span className="text-cinnabar font-bold">*</span></label>
+              <label className="block text-sm font-medium text-sandalwood mb-2">Confirm Password <span className="text-cinnabar font-bold">*</span></label>
               <input
                 type="password"
                 placeholder="••••••"
@@ -140,7 +152,7 @@ export default function RegisterPage() {
               className="w-full py-3 px-4 bg-cinnabar hover:bg-cinnabar/90 text-white font-medium rounded-lg shadow-md transition-colors duration-300 font-serif tracking-wide"
               disabled={isLoading}
             >
-              {isLoading ? '注册中...' : '注册'}
+              {isLoading ? 'Registering...' : 'Register'}
             </button>
           </form>
         </div>

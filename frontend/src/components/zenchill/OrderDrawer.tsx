@@ -68,7 +68,7 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
       const userOrders = await apiService.getUserOrders();
       setOrders(userOrders);
     } catch (error) {
-      console.error('获取订单失败:', error);
+      console.error('Failed to fetch orders:', error);
       toast.error(t('order.fetchOrdersFailed'));
     } finally {
       setIsLoading(false);
@@ -110,8 +110,8 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-paper relative">
           <div>
-            <h2 className="text-2xl font-serif text-sandalwood">订单管理</h2>
-            <p className="text-xs text-stone-500 font-light mt-1">我的订单</p>
+            <h2 className="text-2xl font-serif text-sandalwood">My Orders</h2>
+            <p className="text-xs text-stone-500 font-light mt-1">Order History</p>
           </div>
           <button
             onClick={onClose}
@@ -194,14 +194,14 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
                             <p className="font-serif text-stone-800 truncate">{item.product.name}</p>
                             <p className="text-stone-500">x{item.quantity}</p>
                           </div>
-                          <div className="font-serif text-stone-700">¥{parseFloat(item.price).toFixed(2)}</div>
+                          <div className="font-serif text-stone-700">${parseFloat(item.price).toFixed(2)}</div>
                         </div>
                       ))}
                     </div>
 
                     <div className="flex justify-between font-serif font-bold border-t border-stone-300 pt-3">
                       <span>{t('order.total')}</span>
-                      <span className="text-cinnabar">¥{parseFloat(order.total).toFixed(2)}</span>
+                      <span className="text-cinnabar">${parseFloat(order.total).toFixed(2)}</span>
                     </div>
                   </div>
                 );

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class CartService {
@@ -16,14 +17,15 @@ export class CartService {
       },
     });
 
-    // Calculate cart totals
-    const subtotal = cartItems.reduce((sum, item) => {
-      return sum + parseFloat(item.product.price.toString()) * item.quantity;
-    }, 0);
+    // Calculate cart totals using Prisma Decimal (avoid float precision issues)
+    const subtotalDecimal = cartItems.reduce((sum: Decimal, item) => {
+      return sum.add(item.product.price.times(item.quantity));
+    }, new Decimal(0));
 
     return {
       items: cartItems,
-      subtotal,
+      // Keep response shape compatible with current frontend (number)
+      subtotal: parseFloat(subtotalDecimal.toFixed(2)),
       totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0),
     };
   }
@@ -39,6 +41,11 @@ export class CartService {
 
     if (!product) {
       throw new NotFoundException('Product not found');
+    }
+
+    // Disallow adding inactive (unpublished) products to cart
+    if (!product.isActive) {
+      throw new ConflictException('Product is not available');
     }
 
     // Check stock availability
@@ -57,11 +64,17 @@ export class CartService {
     });
 
     if (existingCartItem) {
+      // Validate stock with existing quantity
+      const nextQuantity = existingCartItem.quantity + quantity;
+      if (product.stock < nextQuantity) {
+        throw new ConflictException('Not enough stock available');
+      }
+
       // Update quantity if item exists
       return this.prisma.cartItem.update({
         where: { id: existingCartItem.id },
         data: {
-          quantity: existingCartItem.quantity + quantity,
+          quantity: nextQuantity,
         },
         include: {
           product: true,
@@ -100,7 +113,15 @@ export class CartService {
       where: { id: cartItem.productId },
     });
 
-    if (!product || product.stock < quantity) {
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (!product.isActive) {
+      throw new ConflictException('Product is not available');
+    }
+
+    if (product.stock < quantity) {
       throw new ConflictException('Not enough stock available');
     }
 

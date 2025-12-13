@@ -6,8 +6,8 @@
  */
 import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from 'react';
 import { Product, CartItem, Category } from '../types';
-import { PRODUCTS } from '../constants'; // 静态数据作为降级方案
-import { apiService } from '../services/api'; // API服务层
+import { PRODUCTS } from '../constants'; // Static data as fallback
+import { apiService } from '../services/api'; // API service layer
 
 /**
  * 上下文类型定义
@@ -66,11 +66,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Order and Settings drawers states
   const [isOrderDrawerOpen, setIsOrderDrawerOpen] = useState(false);
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string>('全部');
+  const [activeCategory, setActiveCategory] = useState<string>('All');
   const [activeTab, setActiveTab] = useState('about');
 
-  // 产品数据状态
-  const [allProducts, setAllProducts] = useState<Product[]>(PRODUCTS); // 默认使用静态数据
+  // Product data state
+  const [allProducts, setAllProducts] = useState<Product[]>(PRODUCTS); // Default to static data
   const [isProductsLoading, setIsProductsLoading] = useState(false);
   const [productsError, setProductsError] = useState<string | null>(null);
 
@@ -115,7 +115,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  // 从API获取产品数据
+  // Fetch product data from API
   useEffect(() => {
     const fetchProducts = async () => {
       setIsProductsLoading(true);
@@ -123,17 +123,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         const products = await apiService.getProducts();
-        setAllProducts(products);
+        // Ensure products is always an array
+        setAllProducts(Array.isArray(products) ? products : []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
-        setProductsError('获取产品数据失败，正在使用本地数据');
-        // 保持静态数据作为降级方案
+        setProductsError('Failed to fetch product data, using local data instead');
+        // Keep static data as fallback
       } finally {
         setIsProductsLoading(false);
       }
     };
 
-    // 延迟执行API请求，避免阻塞页面加载
+    // Delay API request to avoid blocking page load
     const timer = setTimeout(() => {
       fetchProducts();
     }, 1000);
@@ -141,9 +142,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // 产品过滤
+  // Product filtering - Ensure always returns an array
   const filteredProducts = useMemo(() => {
-    if (activeCategory === '全部') return allProducts;
+    if (!Array.isArray(allProducts)) return [];
+    if (activeCategory === 'All') return allProducts;
     return allProducts.filter(p => p.category === activeCategory);
   }, [activeCategory, allProducts]);
 

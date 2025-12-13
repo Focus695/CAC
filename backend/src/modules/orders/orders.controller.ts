@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, UpdateOrderStatusDto, UpdatePaymentStatusDto } from './dto/order.dto';
@@ -13,8 +13,12 @@ export class OrdersController {
 
   @Get()
   @ApiOperation({ summary: 'Get user orders' })
-  getUserOrders(@Request() req: any) {
-    return this.ordersService.getUserOrders(req.user.userId);
+  getUserOrders(@Request() req: any, @Query('page') page: string, @Query('limit') limit: string) {
+    return this.ordersService.getUserOrders(
+      req.user.userId,
+      page ? parseInt(page) : 1,
+      limit ? parseInt(limit) : 10
+    );
   }
 
   @Post()

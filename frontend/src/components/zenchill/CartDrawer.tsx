@@ -40,8 +40,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-paper relative">
           <div>
-            <h2 className="text-2xl font-serif text-sandalwood">珍宝囊</h2>
-            <p className="text-xs text-stone-500 font-light mt-1">已选 {cartItems.length} 件雅物</p>
+            <h2 className="text-2xl font-serif text-sandalwood">Shopping Bag</h2>
+            <p className="text-xs text-stone-500 font-light mt-1">{cartItems.length} items selected</p>
           </div>
           <button
             onClick={onClose}
@@ -60,12 +60,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-4 opacity-60">
               <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-cinnabar mb-4"></div>
-              <p className="font-serif text-lg">正在加载购物车...</p>
+              <p className="font-serif text-lg">Loading cart...</p>
             </div>
           ) : cartItems.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-4 opacity-60">
               <ShoppingBagIcon size={64} />
-              <p className="font-serif text-lg">囊中空空，何不寻些雅物？</p>
+              <p className="font-serif text-lg">Your bag is empty. Discover our treasures.</p>
             </div>
           ) : (
             cartItems.map((item) => (
@@ -119,14 +119,14 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
         {cartItems.length > 0 && (
           <div className="p-6 border-t border-stone-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <div className="flex justify-between items-center mb-6">
-              <span className="font-serif text-stone-500">合计 (不含运费)</span>
-              <span className="text-3xl font-serif text-cinnabar font-bold">¥ {total}</span>
+              <span className="font-serif text-stone-500">Subtotal (excl. shipping)</span>
+              <span className="text-3xl font-serif text-cinnabar font-bold">$ {total}</span>
             </div>
             <button
               onClick={onCheckout}
               className="w-full bg-cinnabar text-white py-4 font-serif text-lg tracking-widest hover:bg-red-900 transition-all duration-300 flex items-center justify-center gap-2 group shadow-lg"
             >
-              <span>结算雅物</span>
+              <span>Checkout</span>
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
