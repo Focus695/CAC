@@ -29,15 +29,15 @@ export function Pagination({
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4">
       <div className="text-sm text-gray-600">
-        Page <span className="font-medium">{page}</span> /{" "}
-        <span className="font-medium">{totalPages}</span> · Total{" "}
-        <span className="font-medium">{totalCount}</span>
+        第 <span className="font-medium">{page}</span> 页 /{" "}
+        <span className="font-medium">{totalPages}</span> 页 · 共{" "}
+        <span className="font-medium">{totalCount}</span> 条
       </div>
 
       <div className="flex items-center gap-3">
         {onLimitChange && (
           <label className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Rows</span>
+            <span>每页</span>
             <select
               className="px-2 py-1 border border-gray-300 rounded-md bg-white"
               value={limit}
@@ -58,14 +58,14 @@ export function Pagination({
             disabled={!hasPrev}
             onClick={() => onPageChange(page - 1)}
           >
-            Prev
+            上一页
           </button>
           <button
             className="px-3 py-1 rounded-md border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!hasNext}
             onClick={() => onPageChange(page + 1)}
           >
-            Next
+            下一页
           </button>
         </div>
       </div>

@@ -24,20 +24,20 @@ export default function AdminLogin() {
     setLoading(true)
 
     try {
-      await apiService.login({ email, password })
+      await apiService.adminLogin({ email, password })
 
       // 立即校验是否为管理员，避免“闪一下又被踢回”的体验
-      const profile = await apiService.getProfile()
+      const profile = await apiService.getAdminProfile()
       if (profile?.role !== 'ADMIN') {
         try {
-          await apiService.logout()
+          await apiService.adminLogout()
         } catch {
           // ignore
         }
         throw new Error('该账号不是管理员，无法登录后台')
       }
 
-      toast.success('Login successful!')
+      toast.success('登录成功！')
       setIsLoggedIn(true)
     } catch (error: any) {
       toast.error(error.message)
@@ -49,12 +49,12 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Admin Login</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">管理员登录</h1>
 
         <form onSubmit={handleLogin}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              邮箱
             </label>
             <input
               type="email"
@@ -68,7 +68,7 @@ export default function AdminLogin() {
 
           <div className="mb-6">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              密码
             </label>
             <input
               type="password"
@@ -89,14 +89,14 @@ export default function AdminLogin() {
                 : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? '正在登录...' : '登录'}
           </button>
         </form>
 
         <div className="mt-4 text-center text-sm text-gray-500">
-          <p>Default credentials:</p>
-          <p>Email: zenchill@example.com</p>
-          <p>Password: zenchill888</p>
+          <p>默认凭据:</p>
+          <p>邮箱: zenchill@example.com</p>
+          <p>密码: zenchill888</p>
         </div>
       </div>
     </div>

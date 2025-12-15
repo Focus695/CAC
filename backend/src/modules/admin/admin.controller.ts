@@ -13,14 +13,17 @@ import {
   UseGuards,
   UseInterceptors,
   Body,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { ProductsService } from '../products/products.service';
 import { OrdersService } from '../orders/orders.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CategoriesService } from '../categories/categories.service';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { AdminAuthGuard } from '../auth/guards/admin-auth.guard';
 import { AdminUpdateUserDto } from '../users/dto/admin-user.dto';
 import { CreateAdminProductDto, UpdateAdminProductDto } from '../products/dto/admin-product.dto';
+import { CreateAdminCategoryDto, UpdateAdminCategoryDto } from '../categories/dto/admin-category.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { randomUUID } from 'crypto';
@@ -28,12 +31,13 @@ import { extname } from 'path';
 import { ALLOWED_IMAGE_MIME_TYPES, UPLOADS_DIRNAME, UPLOADS_ROUTE_PREFIX } from './uploads.constants';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard, AdminAuthGuard)
+@UseGuards(AdminJwtAuthGuard, AdminAuthGuard)
 export class AdminController {
   constructor(
     private readonly usersService: UsersService,
     private readonly productsService: ProductsService,
     private readonly ordersService: OrdersService,
+    private readonly categoriesService: CategoriesService,
   ) { }
 
   // User Management
@@ -129,21 +133,25 @@ export class AdminController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: UPLOADS_DIRNAME,
-        filename: (_req, file, cb) => {
+        filename: (_req: any, file: any, cb: any) => {
           const safeExt = extname(file.originalname || '').toLowerCase() || '.jpg';
           cb(null, `${randomUUID()}${safeExt}`);
         },
       }),
-      fileFilter: (_req, file, cb) => {
+      fileFilter: (_req: any, file: any, cb: any) => {
         cb(null, ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype));
       },
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
     })
   )
-  uploadImage(@UploadedFile() file?: Express.Multer.File) {
+  uploadImage(@Request() req: any, @UploadedFile() file?: any) {
     if (!file) throw new BadRequestException('No file uploaded (PNG/JPG/JPEG only)');
+    // Build full URL from request
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3001';
+    const baseUrl = `${protocol}://${host}`;
     return {
-      url: `${UPLOADS_ROUTE_PREFIX}/${file.filename}`,
+      url: `${baseUrl}${UPLOADS_ROUTE_PREFIX}/${file.filename}`,
       filename: file.filename,
       originalName: file.originalname,
       size: file.size,
@@ -156,39 +164,33 @@ export class AdminController {
     FilesInterceptor('files', 9, {
       storage: diskStorage({
         destination: UPLOADS_DIRNAME,
-        filename: (_req, file, cb) => {
+        filename: (_req: any, file: any, cb: any) => {
           const safeExt = extname(file.originalname || '').toLowerCase() || '.jpg';
           cb(null, `${randomUUID()}${safeExt}`);
         },
       }),
-      fileFilter: (_req, file, cb) => {
+      fileFilter: (_req: any, file: any, cb: any) => {
         cb(null, ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype));
       },
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB each
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB each
     })
   )
-  uploadImages(@UploadedFiles() files?: Express.Multer.File[]) {
+  uploadImages(@Request() req: any, @UploadedFiles() files?: any[]) {
     const list = Array.isArray(files) ? files : [];
     if (list.length === 0) throw new BadRequestException('No files uploaded (PNG/JPG/JPEG only)');
+    // Build full URL from request
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3001';
+    const baseUrl = `${protocol}://${host}`;
     return {
       images: list.map((f) => ({
-        url: `${UPLOADS_ROUTE_PREFIX}/${f.filename}`,
+        url: `${baseUrl}${UPLOADS_ROUTE_PREFIX}/${f.filename}`,
         filename: f.filename,
         originalName: f.originalname,
         size: f.size,
         mimeType: f.mimetype,
       })),
     };
-  }
-
-  @Put('products/:id/publish')
-  publishProduct(@Param('id') id: string) {
-    return this.productsService.publish(id);
-  }
-
-  @Put('products/:id/unpublish')
-  unpublishProduct(@Param('id') id: string) {
-    return this.productsService.unpublish(id);
   }
 
   // Order Management
@@ -246,5 +248,31 @@ export class AdminController {
   @Put('orders/:id/update-payment')
   updateOrderPaymentStatus(@Param('id') id: string, @Body() body: { paymentStatus: any }) {
     return this.ordersService.updatePaymentStatus(id, body);
+  }
+
+  // Category Management
+  @Get('categories')
+  getCategoriesAdmin() {
+    return this.categoriesService.findAllAdmin();
+  }
+
+  @Post('categories')
+  createCategory(@Body() dto: CreateAdminCategoryDto) {
+    return this.categoriesService.createAdmin(dto);
+  }
+
+  @Put('categories/:id')
+  updateCategory(@Param('id') id: string, @Body() dto: UpdateAdminCategoryDto) {
+    return this.categoriesService.updateAdmin(id, dto);
+  }
+
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.categoriesService.deleteAdmin(id);
+  }
+
+  @Patch('categories/:id/status')
+  toggleCategoryStatus(@Param('id') id: string) {
+    return this.categoriesService.toggleStatus(id);
   }
 }

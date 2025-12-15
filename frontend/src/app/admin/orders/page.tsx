@@ -78,7 +78,7 @@ export default function OrderManagement() {
         setPagination(result.pagination)
       } catch (error) {
         console.error('Failed to fetch orders:', error)
-        setError('Failed to fetch orders')
+        setError('获取订单失败')
       }
       finally {
         setLoading(false)
@@ -122,11 +122,11 @@ export default function OrderManagement() {
           trackingNumber: updated?.trackingNumber ?? trackingNumber,
         }
       })
-      toast.success('Order shipped')
+      toast.success('订单已发货')
     } catch (e) {
       console.error('Ship failed:', e)
       setOrders(prevOrders)
-      toast.error('Ship failed')
+      toast.error('发货失败')
     } finally {
       setLoading(false)
     }
@@ -151,11 +151,11 @@ export default function OrderManagement() {
           trackingNumber: updated?.status ?? 'DELIVERED',
         }
       })
-      toast.success('Order delivered')
+      toast.success('订单已送达')
     } catch (e) {
       console.error('Deliver failed:', e)
       setOrders(prevOrders)
-      toast.error('Deliver failed')
+      toast.error('标记送达失败')
     } finally {
       setLoading(false)
     }
@@ -171,7 +171,7 @@ export default function OrderManagement() {
       setDetailsOrder(result)
     } catch (e) {
       console.error('Fetch order details failed:', e)
-      setDetailsError('Failed to load order details')
+      setDetailsError('加载订单详情失败')
     } finally {
       setDetailsLoading(false)
     }
@@ -205,8 +205,8 @@ export default function OrderManagement() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>Order Management</CardTitle>
-              <CardDescription>Process and track customer orders</CardDescription>
+              <CardTitle>订单管理</CardTitle>
+              <CardDescription>处理和跟踪客户订单</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -217,7 +217,7 @@ export default function OrderManagement() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 type="text"
-                placeholder="Search orders..."
+                placeholder="搜索订单..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -234,7 +234,7 @@ export default function OrderManagement() {
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="">All Statuses</option>
+                <option value="">所有状态</option>
                 <option value="CONFIRMED">未发货</option>
                 <option value="SHIPPED">已发货</option>
                 <option value="DELIVERED">已收货</option>
@@ -257,25 +257,25 @@ export default function OrderManagement() {
               <table className="w-full caption-bottom text-sm">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Order #</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Customer</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Total</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Status</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Date</th>
-                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground text-gray-500">Actions</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">订单号</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">客户</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">总额</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">状态</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">日期</th>
+                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground text-gray-500">操作</th>
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
                   {loading && orders.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-4 text-center text-gray-500">Loading orders...</td>
+                      <td colSpan={6} className="p-4 text-center text-gray-500">正在加载订单...</td>
                     </tr>
                   ) : orders.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-8 text-center text-gray-500">
                         <div className="flex flex-col items-center gap-2">
                           <ShoppingCart className="w-8 h-8 text-gray-300" />
-                          <p>No orders found.</p>
+                          <p>未找到订单。</p>
                         </div>
                       </td>
                     </tr>
@@ -301,7 +301,7 @@ export default function OrderManagement() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => openDetails(order)}
-                            title="View Details"
+                            title="查看详情"
                           >
                             <Eye className="h-4 w-4 text-slate-600" />
                           </Button>
@@ -311,7 +311,7 @@ export default function OrderManagement() {
                               size="sm"
                               className="h-8 w-8 p-0 hover:bg-blue-50 border-blue-200"
                               onClick={() => setShipTarget(order)}
-                              title="Ship Order"
+                              title="发货"
                             >
                               <Truck className="h-4 w-4 text-blue-600" />
                             </Button>
@@ -322,7 +322,7 @@ export default function OrderManagement() {
                               size="sm"
                               className="h-8 w-8 p-0 hover:bg-green-50 border-green-200"
                               onClick={() => setDeliverTarget(order)}
-                              title="Mark as Delivered"
+                              title="标记为已送达"
                             >
                               <CheckCircle className="h-4 w-4 text-green-600" />
                             </Button>
@@ -361,10 +361,10 @@ export default function OrderManagement() {
 
       <ConfirmModal
         open={!!deliverTarget}
-        title="Mark as delivered?"
-        description={deliverTarget ? `Order ${deliverTarget.orderNumber} will be marked as delivered.` : undefined}
-        confirmText="Mark delivered"
-        cancelText="Cancel"
+        title="标记为已送达？"
+        description={deliverTarget ? `订单 ${deliverTarget.orderNumber} 将被标记为已送达。` : undefined}
+        confirmText="标记已送达"
+        cancelText="取消"
         confirmDisabled={loading}
         onOpenChange={(open) => {
           if (!open) setDeliverTarget(null)

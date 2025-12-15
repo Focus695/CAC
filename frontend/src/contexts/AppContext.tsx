@@ -5,9 +5,75 @@
  * 包括购物车、产品筛选、模态框等核心功能
  */
 import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from 'react';
-import { Product, CartItem, Category } from '../types';
+import { Product, CartItem } from '../types';
 import { PRODUCTS } from '../constants'; // Static data as fallback
 import { apiService } from '../services/api'; // API service layer
+
+function flattenCategoryNames(nodes: any[]): string[] {
+  const out: string[] = [];
+  const walk = (arr: any[]) => {
+    for (const n of arr || []) {
+      if (!n) continue;
+      if (n.name) out.push(String(n.name));
+      if (Array.isArray(n.children) && n.children.length > 0) walk(n.children);
+    }
+  };
+  walk(nodes || []);
+  return out;
+}
+
+function buildCategoryIdToName(nodes: any[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  const walk = (arr: any[]) => {
+    for (const n of arr || []) {
+      if (!n) continue;
+      if (n.id && n.name) map[String(n.id)] = String(n.name);
+      if (Array.isArray(n.children) && n.children.length > 0) walk(n.children);
+    }
+  };
+  walk(nodes || []);
+  return map;
+}
+
+function toStorefrontProduct(p: any, categoryIdToName: Record<string, string>): Product {
+  // If it's already the local/static shape, return as-is
+  if (p && typeof p === 'object' && 'imageUrl' in p && 'category' in p) {
+    return p as Product;
+  }
+
+  const priceNum = typeof p?.price === 'number' ? p.price : parseFloat(String(p?.price ?? '0'));
+  const mainImage = p?.mainImage || p?.imageUrl || '';
+  const sections = Array.isArray(p?.sections) ? p.sections : [];
+  const firstSection = sections[0] || {};
+  const description = String(firstSection?.content_en || firstSection?.content_zh || '').trim();
+
+  const categoryName =
+    (p?.categoryId && categoryIdToName[String(p.categoryId)]) ||
+    (p?.category?.name ? String(p.category.name) : '') ||
+    'Uncategorized';
+
+  // Build product with extended properties
+  const product: any = {
+    id: String(p?.id ?? ''),
+    name: String(p?.name_en || p?.name_zh || p?.name || '').trim(),
+    price: Number.isFinite(priceNum) ? priceNum : 0,
+    category: categoryName as any, // keep AppContext filtering based on string equality
+    description: description || '',
+    imageUrl: String(mainImage),
+    benefits: '',
+    stock: typeof p?.stock === 'number' ? p.stock : Number(p?.stock ?? 0),
+  };
+
+  // Preserve sections and detailImages for ProductDetailModal
+  if (sections.length > 0) {
+    product.sections = sections;
+  }
+  if (Array.isArray(p?.detailImages) && p.detailImages.length > 0) {
+    product.detailImages = p.detailImages;
+  }
+
+  return product;
+}
 
 /**
  * 上下文类型定义
@@ -73,6 +139,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [allProducts, setAllProducts] = useState<Product[]>(PRODUCTS); // Default to static data
   const [isProductsLoading, setIsProductsLoading] = useState(false);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [categoryNames, setCategoryNames] = useState<string[]>([]);
 
   // Cart Logic
   const handleAddToCart = (product: Product) => {
@@ -122,9 +189,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setProductsError(null);
 
       try {
-        const products = await apiService.getProducts();
-        // Ensure products is always an array
-        setAllProducts(Array.isArray(products) ? products : []);
+        const [categories, products] = await Promise.all([apiService.getCategories(), apiService.getProducts()]);
+        const categoryIdToName = buildCategoryIdToName(Array.isArray(categories) ? categories : []);
+        const categoryList = flattenCategoryNames(Array.isArray(categories) ? categories : []);
+        setCategoryNames(categoryList);
+
+        // Ensure products is always an array and map backend shape -> storefront shape
+        const list = Array.isArray(products) ? products : [];
+        setAllProducts(list.map((p) => toStorefrontProduct(p, categoryIdToName)));
       } catch (error) {
         console.error('Failed to fetch products:', error);
         setProductsError('Failed to fetch product data, using local data instead');

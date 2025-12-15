@@ -20,8 +20,9 @@ import { useAppContext } from '@/contexts/AppContext';
 import { TEAM_MEMBERS } from '@/constants';
 import { Category } from '@/types';
 import { useUser } from '@/contexts/UserContext';
+import { apiService } from '@/services/api';
 
-const categories = ['All', ...Object.values(Category)];
+const fallbackCategories = ['All', ...Object.values(Category)];
 
 export default function Home() {
   const { user } = useUser();
@@ -52,6 +53,42 @@ export default function Home() {
     isProductsLoading,
     productsError,
   } = useAppContext();
+
+  const [categoryTabs, setCategoryTabs] = React.useState<string[]>(fallbackCategories);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cats = await apiService.getCategories();
+        const names: string[] = [];
+        const walk = (arr: any[]) => {
+          for (const n of arr || []) {
+            if (!n) continue;
+            if (n.name) names.push(String(n.name));
+            if (Array.isArray(n.children) && n.children.length > 0) walk(n.children);
+          }
+        };
+        if (Array.isArray(cats)) walk(cats);
+        const uniq = Array.from(new Set(names.filter(Boolean)));
+        if (!cancelled && uniq.length > 0) {
+          setCategoryTabs(['All', ...uniq]);
+        }
+      } catch {
+        // ignore, keep fallback
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    // If activeCategory is no longer available (because categories changed), reset to All
+    if (activeCategory !== 'All' && !categoryTabs.includes(activeCategory)) {
+      setActiveCategory('All');
+    }
+  }, [activeCategory, categoryTabs, setActiveCategory]);
 
   const AboutView = () => (
     <div className="animate-fade-in-up">
@@ -127,7 +164,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-2">
-            {categories.map((cat) => (
+            {categoryTabs.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}

@@ -7,7 +7,6 @@ import { NAV_LINKS } from '@/constants';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import { useUser } from '@/contexts/UserContext';
-import LanguageSwitcher from '../LanguageSwitcher';
 
 interface NavbarProps {
   cartCount: number;
@@ -161,8 +160,6 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart, onTabChange, onO
             </div>
           )}
 
-          {/* Language Switcher */}
-          <LanguageSwitcher />
 
           <div
             className="relative cursor-pointer hover:text-cinnabar transition-colors"

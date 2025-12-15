@@ -12,9 +12,9 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
     if (context.getType() === 'http') {
       const request = context.switchToHttp().getRequest<Request>();
-      // Bypass Swagger endpoints (both with and without global prefix just in case)
+      // Bypass Swagger endpoints and static file endpoints
       const url = request?.originalUrl;
-      if (url?.startsWith('/docs') || url?.startsWith('/api/docs')) {
+      if (url?.startsWith('/docs') || url?.startsWith('/api/docs') || url?.startsWith('/uploads')) {
         return next.handle();
       }
     }

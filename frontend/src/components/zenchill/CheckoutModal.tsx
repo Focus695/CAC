@@ -6,16 +6,47 @@ import { useTranslation } from 'react-i18next';
 import { CartItem } from '@/types';
 import { apiService } from '@/services/api';
 import toast from 'react-hot-toast';
+import { useCart } from '@/contexts/CartContext';
 
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  cartItems: CartItem[];
-  total: number;
+  cartItems?: CartItem[]; // Make optional, will use CartContext if not provided
+  total?: number; // Make optional, will use CartContext if not provided
   onPaymentSuccess: () => void;
 }
 
-const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItems, total, onPaymentSuccess }) => {
+const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItems: propCartItems, total: propTotal, onPaymentSuccess }) => {
+  // Use CartContext as the source of truth
+  const { cartItems: contextCartItems, subtotal: contextSubtotal } = useCart();
+  
+  // Use provided props if available, otherwise fall back to context
+  const cartItems = propCartItems && propCartItems.length > 0 ? propCartItems : contextCartItems;
+  
+  // Calculate total: prefer contextSubtotal if using context items, otherwise calculate from cartItems
+  const calculateTotal = () => {
+    // If using context items, use context subtotal
+    if (cartItems === contextCartItems && contextSubtotal > 0) {
+      return contextSubtotal;
+    }
+    
+    // Otherwise calculate from cartItems
+    if (cartItems && cartItems.length > 0) {
+      return cartItems.reduce((sum, item) => {
+        const product = (item as any).product || item;
+        const productPrice = typeof product.price === 'number' 
+          ? product.price 
+          : parseFloat(String(product.price || 0));
+        const quantity = item.quantity || 1;
+        return sum + (productPrice * quantity);
+      }, 0);
+    }
+    
+    // Fallback to propTotal if provided and > 0
+    return propTotal && propTotal > 0 ? propTotal : 0;
+  };
+  
+  const total = calculateTotal();
   const { t } = useTranslation('common');
   const [step, setStep] = useState<'form' | 'processing' | 'success'>('form');
   const [formData, setFormData] = useState({
@@ -124,21 +155,57 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
             <div className="w-full md:w-5/12 bg-stone-100/50 p-8 border-r border-stone-200 overflow-y-auto">
               <h3 className="font-serif text-xl text-sandalwood mb-6 border-b border-stone-300 pb-2">{t('checkout.orderSummary')}</h3>
               <div className="space-y-4">
-                {cartItems.map(item => (
-                  <div key={item.id} className="flex gap-3 text-sm">
-                    <img src={item.imageUrl} className="w-12 h-12 object-cover rounded-sm bg-stone-200" alt={item.name} />
-                    <div className="flex-1">
-                      <p className="font-serif text-stone-800">{item.name}</p>
-                      <p className="text-stone-500">x{item.quantity}</p>
-                    </div>
-                    <div className="font-serif text-stone-700">${item.price * item.quantity}</div>
-                  </div>
-                ))}
+                {cartItems.length === 0 ? (
+                  <p className="text-stone-400 text-sm italic">No items in cart</p>
+                ) : (
+                  cartItems.map((item) => {
+                    // Get product data - support both nested product object and flat structure
+                    const product = (item as any).product || item;
+                    
+                    // Get image URL - support mainImage, detailImages, images array, or imageUrl
+                    const productImage = (product as any).mainImage 
+                      || ((product as any).detailImages && Array.isArray((product as any).detailImages) && (product as any).detailImages.length > 0 
+                        ? (product as any).detailImages[0] 
+                        : null)
+                      || ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0 
+                        ? (product as any).images[0] 
+                        : null)
+                      || (product as any).imageUrl
+                      || '';
+
+                    // Get product name - support name_en, name_zh, or name
+                    const productName = (product as any).name_en 
+                      || (product as any).name_zh 
+                      || product.name 
+                      || 'Unknown Product';
+
+                    // Get price - support nested product.price or item.price
+                    const productPrice = typeof product.price === 'number' ? product.price : parseFloat(String(product.price || 0));
+                    
+                    // Get quantity
+                    const quantity = item.quantity || 1;
+
+                    return (
+                      <div key={item.id} className="flex gap-3 text-sm">
+                        {productImage ? (
+                          <img src={productImage} className="w-12 h-12 object-cover rounded-sm bg-stone-200" alt={productName} />
+                        ) : (
+                          <div className="w-12 h-12 bg-stone-200 rounded-sm flex items-center justify-center text-stone-400 text-xs">No Image</div>
+                        )}
+                        <div className="flex-1">
+                          <p className="font-serif text-stone-800">{productName}</p>
+                          <p className="text-stone-500">x{quantity}</p>
+                        </div>
+                        <div className="font-serif text-stone-700">${(productPrice * quantity).toFixed(2)}</div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
               <div className="mt-8 pt-6 border-t border-stone-300">
                  <div className="flex justify-between text-lg font-serif font-bold text-cinnabar">
                    <span>Total</span>
-                   <span>$ {total}</span>
+                   <span>$ {typeof total === 'number' ? total.toFixed(2) : parseFloat(String(total || 0)).toFixed(2)}</span>
                  </div>
               </div>
             </div>

@@ -14,12 +14,17 @@ interface OrderItem {
   id: string;
   product: {
     id: string;
-    name: string;
-    price: string;
-    imageUrl: string;
+    name?: string;
+    name_en?: string;
+    name_zh?: string;
+    price?: string | number;
+    imageUrl?: string;
+    mainImage?: string;
+    detailImages?: string[];
+    images?: string[];
   };
   quantity: number;
-  price: string;
+  price: string | number;
 }
 
 interface Order {
@@ -183,20 +188,55 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
 
                     {/* Order Items */}
                     <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
-                      {order.items.map((item) => (
-                        <div key={item.id} className="flex gap-3 text-sm">
-                          <img
-                            src={item.product.imageUrl}
-                            className="w-12 h-12 object-cover rounded-sm bg-stone-200"
-                            alt={item.product.name}
-                          />
-                          <div className="flex-1">
-                            <p className="font-serif text-stone-800 truncate">{item.product.name}</p>
-                            <p className="text-stone-500">x{item.quantity}</p>
+                      {order.items.map((item) => {
+                        // Get product data - handle both nested product object and direct access
+                        const product = (item as any).product || item;
+                        
+                        // Get image URL - support mainImage, detailImages, images array, or imageUrl
+                        const productImage = (product as any).mainImage 
+                          || ((product as any).detailImages && Array.isArray((product as any).detailImages) && (product as any).detailImages.length > 0 
+                            ? (product as any).detailImages[0] 
+                            : null)
+                          || ((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0 
+                            ? (product as any).images[0] 
+                            : null)
+                          || (product as any).imageUrl
+                          || '';
+
+                        // Get product name - support name_en, name_zh, or name
+                        const productName = (product as any).name_en 
+                          || (product as any).name_zh 
+                          || product.name 
+                          || 'Unknown Product';
+
+                        // Get price - support item.price or product.price
+                        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (typeof item.price === 'number' ? item.price : 0);
+                        
+                        return (
+                          <div key={item.id} className="flex gap-3 text-sm">
+                            {productImage ? (
+                              <img
+                                src={productImage}
+                                className="w-12 h-12 object-cover rounded-sm bg-stone-200"
+                                alt={productName}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-12 h-12 bg-stone-200 rounded-sm flex items-center justify-center text-stone-400 text-xs ${productImage ? 'hidden' : ''}`}>
+                              No Image
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-serif text-stone-800 truncate">{productName}</p>
+                              <p className="text-stone-500">x{item.quantity}</p>
+                            </div>
+                            <div className="font-serif text-stone-700">${itemPrice.toFixed(2)}</div>
                           </div>
-                          <div className="font-serif text-stone-700">${parseFloat(item.price).toFixed(2)}</div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     <div className="flex justify-between font-serif font-bold border-t border-stone-300 pt-3">

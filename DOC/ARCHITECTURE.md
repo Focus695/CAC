@@ -4,7 +4,6 @@
 
 这是一个基于现代技术栈构建的渐进式Web应用程序（PWA），主要功能包括：
 - 电商独立站台（产品管理、购物车、订单处理）
-- 游戏化功能（积分、等级、徽章、成就系统）
 
 ## 🏗️ 技术栈
 
@@ -61,8 +60,7 @@ CAC/
 │   │   │   ├── categories/  # 分类模块
 │   │   │   ├── cart/        # 购物车模块
 │   │   │   ├── orders/      # 订单模块
-│   │   │   ├── reviews/     # 评价模块
-│   │   │   └── gamification/# 游戏化模块
+│   │   │   └── reviews/     # 评价模块
 │   │   ├── common/          # 通用模块
 │   │   │   ├── decorators/  # 装饰器
 │   │   │   ├── filters/     # 异常过滤器
@@ -267,12 +265,20 @@ CAC/
 1. **User** - 用户模型
    - 基本信息（邮箱、用户名、密码）
    - 角色管理（CUSTOMER, ADMIN, MODERATOR）
-   - 关联：订单、购物车、地址、评价、游戏化档案
+   - 关联：订单、购物车、地址、评价
 
 2. **Product** - 产品模型
    - 基本信息（名称、描述、价格、库存）
-   - 图片数组
+   - 多语言支持（name_en/name_zh, elegantDesc, craftsmanship, healthBenefits）
+   - 图片管理（mainImage, detailImages数组）
    - SKU 管理
+   - **发布控制**（新增）：
+     - publishedAt: DateTime - 发布时间
+     - unpublishedAt: DateTime - 取消发布时间
+     - 支持定时发布/下架
+   - **动态内容**（新增）：
+     - sections: Json - 动态产品介绍（0-3个section）
+     - 格式：[{title_zh, title_en, content_zh, content_en, order}]
    - 关联：分类、购物车、订单项、评价、属性
 
 3. **Category** - 分类模型
@@ -301,40 +307,56 @@ CAC/
    - 评论内容
    - 验证状态
 
-9. **GamificationProfile** - 游戏化档案
-   - 积分系统
-   - 等级系统
-   - 经验值
-   - 徽章和成就
-
 ## 🔐 认证架构
 
-### JWT 认证流程
-1. 用户登录（用户名/密码）
-2. 后端验证并生成 JWT Token
-3. Token 存储在 HttpOnly Cookie 或 LocalStorage
-4. 后续请求携带 Token
-5. 后端验证 Token 并授权
+### 双认证系统
 
-### 策略
-- **Local Strategy**: 用户名密码登录
-- **JWT Strategy**: Token 验证
+本项目实现了两套独立的认证系统，分别用于用户端和管理端：
 
-### Guards
-- **JwtAuthGuard**: JWT 认证守卫
-- **LocalAuthGuard**: 本地认证守卫
+#### 1. 用户端认证 (User Authentication)
+- **Strategy**: `jwt` (JwtStrategy)
+- **Guard**: `JwtAuthGuard`
+- **Token存储**: HttpOnly Cookie (`access_token`)
+- **用途**: 前端用户购物、订单管理、个人资料
 
-## 🎮 游戏化系统
+**用户认证流程**：
+1. 用户通过 `POST /auth/login` 登录（email + password）
+2. 后端验证凭证并使用bcrypt校验密码
+3. 生成JWT Token并设置HttpOnly Cookie
+4. 前端自动携带Cookie进行后续请求
+5. JwtStrategy从Cookie提取Token并验证
 
-### 功能模块
-- **积分系统**: 用户通过购买、评价等行为获得积分
-- **等级系统**: 基于经验值自动升级
-- **徽章系统**: 完成特定任务获得徽章
-- **成就系统**: 解锁各种成就
+#### 2. 管理端认证 (Admin Authentication)
+- **Strategy**: `admin-jwt` (AdminJwtStrategy)
+- **Guards**: `AdminJwtAuthGuard` + `AdminAuthGuard`
+- **Token存储**: HttpOnly Cookie (`admin_access_token`)
+- **用途**: 后台管理功能（用户管理、产品管理、订单管理等）
+- **角色验证**: 必须为ADMIN或MODERATOR角色
 
-### 数据模型
-- `GamificationProfile`: 存储用户游戏化数据
-- 与 `User` 一对一关系
+**管理员认证流程**：
+1. 管理员通过 `POST /auth/admin/login` 登录
+2. 后端验证凭证 + 检查 `user.role === 'ADMIN'`
+3. 生成JWT Token并设置admin专用Cookie
+4. 访问 `/admin/*` 端点需通过双重验证：
+   - AdminJwtAuthGuard: 验证JWT有效性
+   - AdminAuthGuard: 验证用户角色为ADMIN
+
+### Cookie认证优势
+- **自动携带**: 无需前端手动处理Token
+- **HttpOnly标志**: 防止XSS攻击窃取Token
+- **SameSite属性**: 防止CSRF攻击
+- **安全性更高**: Token不暴露给JavaScript
+
+### 策略配置
+- **Local Strategy**: 用户名密码登录验证
+- **JWT Strategy**: 用户端Token验证（从`access_token` Cookie提取）
+- **Admin JWT Strategy**: 管理端Token验证（从`admin_access_token` Cookie提取）
+
+### Guards层级
+```
+请求 → AdminJwtAuthGuard → AdminAuthGuard → Controller
+      (验证Token)         (验证角色)
+```
 
 ## 📡 API 架构
 
@@ -391,14 +413,168 @@ CAC/
 - `PUT /:id` - 更新评价
 - `DELETE /:id` - 删除评价
 
-#### 游戏化模块 (`/api/gamification`)
-- `GET /profile` - 获取用户游戏化档案
-- `POST /points` - 添加积分
-- `GET /leaderboard` - 获取排行榜
-- `POST /badges` - 授予徽章
+### 管理员API端点
+
+所有管理员端点需要双重认证：`AdminJwtAuthGuard` + `AdminAuthGuard`
+
+#### 管理员 - 用户管理 (`/admin/users`)
+- `GET /admin/users` - 获取用户列表（分页、搜索、筛选、排序）
+  - 查询参数：page, limit, search, role, isActive, sortField, sortOrder
+- `PUT /admin/users/:id` - 更新用户信息（角色、状态等）
+- `DELETE /admin/users/:id` - 删除用户
+
+#### 管理员 - 产品管理 (`/admin/products`)
+- `GET /admin/products` - 获取产品列表（分页、搜索、筛选）
+  - 查询参数：page, limit, search, categoryId, isActive, isFeatured
+- `POST /admin/products` - 创建产品
+  - 支持多语言字段、动态sections、图片上传
+- `PUT /admin/products/:id` - 更新产品
+- `DELETE /admin/products/:id` - 删除产品
+- `PATCH /admin/products/:id/status` - 切换产品启用/禁用状态
+- `PATCH /admin/products/:id/publish` - 发布产品（设置publishedAt）
+- `PATCH /admin/products/:id/unpublish` - 取消发布产品（设置unpublishedAt）
+
+#### 管理员 - 分类管理 (`/admin/categories`)
+- `GET /admin/categories` - 获取所有分类（包含禁用的）
+- `POST /admin/categories` - 创建分类
+- `PUT /admin/categories/:id` - 更新分类
+- `DELETE /admin/categories/:id` - 删除分类
+- `PATCH /admin/categories/:id/status` - 切换分类启用/禁用状态
+
+#### 管理员 - 订单管理 (`/admin/orders`)
+- `GET /admin/orders` - 获取所有订单（分页、筛选）
+  - 查询参数：page, limit, status, paymentStatus, userId, orderNumber
+- `GET /admin/orders/:id` - 获取订单详情（含订单项）
+- `PUT /admin/orders/:id/ship` - 标记订单为已发货
+  - 需提供：trackingNumber（运单号）
+- `PUT /admin/orders/:id/deliver` - 标记订单为已送达
+- `PUT /admin/orders/:id/confirm` - 确认订单
+- `PUT /admin/orders/:id/cancel` - 取消订单
+- `PUT /admin/orders/:id/update-payment` - 更新支付状态
+
+#### 管理员 - 文件上传 (`/admin/uploads`)
+- `POST /admin/uploads/image` - 上传单张图片
+  - 支持格式：PNG, JPG, JPEG
+  - 最大文件大小：10MB
+  - 返回：图片URL和元数据
+- `POST /admin/uploads/images` - 批量上传图片（最多9张）
+  - 返回：图片URL数组
+
+#### 静态文件服务
+- `GET /uploads/:filename` - 获取上传的图片
+  - 公开访问，无需认证
+  - CORS已配置
 
 ### API 文档
 - Swagger UI: `http://localhost:3001/api/docs`
+- 自动生成API文档，包含所有端点、参数、响应示例
+
+## 📤 文件上传架构
+
+### 实现方案
+- **库**: multer + @nestjs/platform-express
+- **存储策略**: 本地磁盘存储 (diskStorage)
+- **存储路径**: `/Users/jinglw/Projects/CAC/backend/uploads/`
+- **URL前缀**: `/uploads/` (通过Express静态文件服务)
+
+### 配置详情
+
+#### 文件验证
+```typescript
+// 文件类型白名单
+acceptedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg']
+
+// 文件大小限制
+maxFileSize: 10MB (10485760 bytes)
+
+// 文件命名策略
+filename: UUID + original extension
+// 例如: 5f6c652e-2721-4132-a4da-28693ae7ef4c.png
+```
+
+#### 安全措施
+1. **文件类型验证**: 仅允许PNG、JPG、JPEG图片
+2. **MIME类型检查**: 双重验证（MIME + 扩展名）
+3. **文件大小限制**: 单文件最大10MB
+4. **UUID文件名**: 防止文件名冲突和路径遍历攻击
+5. **访问控制**: 仅管理员可上传（AdminJwtAuthGuard保护）
+
+### 环境变量配置
+```env
+UPLOAD_DIR=./uploads          # 上传目录
+MAX_FILE_SIZE=10485760        # 最大文件大小（字节）
+```
+
+### API使用示例
+
+#### 单文件上传
+```typescript
+POST /admin/uploads/image
+Content-Type: multipart/form-data
+Authorization: Bearer <admin_token>
+
+Body:
+- file: [binary data]
+
+Response:
+{
+  url: "http://localhost:3001/uploads/uuid.png",
+  filename: "uuid.png",
+  originalName: "product.png",
+  size: 123456,
+  mimeType: "image/png"
+}
+```
+
+#### 批量上传（最多9张）
+```typescript
+POST /admin/uploads/images
+Content-Type: multipart/form-data
+Authorization: Bearer <admin_token>
+
+Body:
+- files: [binary data array]
+
+Response:
+{
+  urls: [
+    "http://localhost:3001/uploads/uuid1.png",
+    "http://localhost:3001/uploads/uuid2.png",
+    ...
+  ]
+}
+```
+
+### 生产环境建议
+
+当前使用本地磁盘存储，适合开发和小规模部署。生产环境建议：
+
+1. **迁移到云存储**
+   - AWS S3
+   - Cloudinary
+   - Aliyun OSS
+   - Google Cloud Storage
+
+2. **实现CDN加速**
+   - CloudFlare
+   - AWS CloudFront
+   - Aliyun CDN
+
+3. **图片处理**
+   - 自动压缩和优化
+   - 多尺寸缩略图生成
+   - WebP格式转换
+   - 图片水印
+
+4. **存储管理**
+   - 文件定期清理策略
+   - 存储空间监控
+   - 备份机制
+
+5. **安全增强**
+   - 病毒扫描
+   - 图片内容审核
+   - 访问日志记录
 
 ## 🎨 前端架构
 
@@ -439,7 +615,6 @@ src/
 - `/orders` - 订单列表
 - `/orders/[id]` - 订单详情
 - `/profile` - 用户资料
-- `/gamification` - 游戏化中心
 - `/login` - 登录
 - `/register` - 注册
 

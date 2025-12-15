@@ -25,12 +25,6 @@ const nextConfig = {
     domains: ['localhost', 'picsum.photos'], // 添加 picsum.photos 作为图片域名
     formats: ['image/avif', 'image/webp'],
   },
-  // 配置国际化路由
-  i18n: {
-    locales: ['zh', 'en'],
-    defaultLocale: 'zh',
-    localeDetection: false,
-  },
 };
 
 module.exports = withPWA(nextConfig);

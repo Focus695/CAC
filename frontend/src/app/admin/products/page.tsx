@@ -42,6 +42,18 @@ const Badge = ({ children, variant = 'default' }: { children: React.ReactNode, v
   )
 }
 
+function flattenCategories(nodes: any[], prefix = ''): { id: string; name: string }[] {
+  const out: { id: string; name: string }[] = [];
+  for (const n of nodes || []) {
+    if (!n) continue;
+    out.push({ id: n.id, name: `${prefix}${n.name}` });
+    if (Array.isArray(n.children) && n.children.length > 0) {
+      out.push(...flattenCategories(n.children, `${prefix}— `));
+    }
+  }
+  return out;
+}
+
 export default function ProductManagement() {
   const [products, setProducts] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -84,6 +96,8 @@ export default function ProductManagement() {
     fetchCategories()
   }, [])
 
+  const categoryOptions = flattenCategories(categories);
+
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -106,7 +120,7 @@ export default function ProductManagement() {
         setPagination(result.pagination)
       } catch (error) {
         console.error('Failed to fetch products:', error)
-        setError('Failed to fetch products')
+        setError('获取产品失败')
       }
       finally {
         setLoading(false)
@@ -122,23 +136,27 @@ export default function ProductManagement() {
   }, [searchTerm, filterCategoryId, filterStatus, limit])
 
   const handleToggleStatus = async (product: any) => {
-    const prevProducts = products
     try {
       setLoading(true)
-      // Optimistic patch
-      setProducts((cur) => cur.map((p: any) => (p.id === product.id ? { ...p, isActive: !p.isActive } : p)))
-      const updated = product.isActive
-        ? await apiService.unpublishProduct(product.id)
-        : await apiService.publishProduct(product.id)
-      // Server is authoritative (also helps if multiple admins toggle)
-      if (updated && typeof updated === 'object') {
-        setProducts((cur) => cur.map((p: any) => (p.id === product.id ? { ...p, ...updated } : p)))
-      }
-      toast.success(product.isActive ? 'Product unpublished' : 'Product published')
+      await (product.isActive
+        ? apiService.unpublishProduct(product.id)
+        : apiService.publishProduct(product.id))
+      toast.success(product.isActive ? '产品已下架' : '产品已上架')
+      // Refresh the product list after status change
+      const result = await apiService.getAdminProductsPaged({
+        page,
+        limit,
+        search: debouncedSearchTerm,
+        categoryId: filterCategoryId || undefined,
+        isActive: filterStatus === 'Active' ? true : filterStatus === 'Inactive' ? false : undefined,
+        sortField: 'createdAt',
+        sortOrder: 'desc',
+      })
+      setProducts(result.products)
+      setPagination(result.pagination)
     } catch (e) {
       console.error('Toggle status failed:', e)
-      setProducts(prevProducts)
-      toast.error(product.isActive ? 'Unpublish failed' : 'Publish failed')
+      toast.error(product.isActive ? '下架失败' : '上架失败')
     } finally {
       setLoading(false)
     }
@@ -163,12 +181,12 @@ export default function ProductManagement() {
         })
       }
       await apiService.deleteProduct(product.id)
-      toast.success('Product deleted')
+      toast.success('产品已删除')
     } catch (e) {
       console.error('Delete failed:', e)
       setProducts(prevProducts)
       setPagination(prevPagination)
-      toast.error('Delete failed')
+      toast.error('删除失败')
     } finally {
       setLoading(false)
     }
@@ -191,33 +209,39 @@ export default function ProductManagement() {
       setLoading(true)
       if (formMode === "create") {
         await apiService.createProduct(values)
-        toast.success("Product created")
+        toast.success("产品已创建")
+        // Refresh the product list after creation
+        const result = await apiService.getAdminProductsPaged({
+          page,
+          limit,
+          search: debouncedSearchTerm,
+          categoryId: filterCategoryId || undefined,
+          isActive: filterStatus === 'Active' ? true : filterStatus === 'Inactive' ? false : undefined,
+          sortField: 'createdAt',
+          sortOrder: 'desc',
+        })
+        setProducts(result.products)
+        setPagination(result.pagination)
       } else {
-        const prevProducts = products
-        // Optimistic merge into current list
-        const categoryObj = categories.find((c: any) => c.id === values.categoryId)
-        setProducts((cur) =>
-          cur.map((p: any) =>
-            p.id === formInitial.id
-              ? {
-                  ...p,
-                  ...values,
-                  categoryId: values.categoryId,
-                  category: categoryObj ? { ...(p.category || {}), ...categoryObj } : p.category,
-                }
-              : p
-          )
-        )
         await apiService.updateProduct(formInitial.id, values)
-        toast.success("Product updated")
-        // keep optimistic state; revert if server fails (caught below)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        void prevProducts
+        toast.success("产品已更新")
+        // Refresh the product list after update
+        const result = await apiService.getAdminProductsPaged({
+          page,
+          limit,
+          search: debouncedSearchTerm,
+          categoryId: filterCategoryId || undefined,
+          isActive: filterStatus === 'Active' ? true : filterStatus === 'Inactive' ? false : undefined,
+          sortField: 'createdAt',
+          sortOrder: 'desc',
+        })
+        setProducts(result.products)
+        setPagination(result.pagination)
       }
       setFormOpen(false)
     } catch (e: any) {
       console.error('Save product failed:', e)
-      toast.error(e?.message || 'Save product failed')
+      toast.error(e?.message || '保存产品失败')
     } finally {
       setLoading(false)
     }
@@ -233,7 +257,7 @@ export default function ProductManagement() {
       setDetailsProduct(result)
     } catch (e: any) {
       console.error('Fetch product details failed:', e)
-      setDetailsError(e?.message || 'Failed to load product details')
+      setDetailsError(e?.message || '加载产品详情失败')
     } finally {
       setDetailsLoading(false)
     }
@@ -245,11 +269,11 @@ export default function ProductManagement() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>Product Management</CardTitle>
-              <CardDescription>Manage your product catalog</CardDescription>
+              <CardTitle>产品管理</CardTitle>
+              <CardDescription>管理您的产品目录</CardDescription>
             </div>
             <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" /> Add Product
+              <Plus className="mr-2 h-4 w-4" /> 添加产品
             </Button>
           </div>
         </CardHeader>
@@ -260,7 +284,7 @@ export default function ProductManagement() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 type="text"
-                placeholder="Search products..."
+                placeholder="搜索产品..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -277,8 +301,8 @@ export default function ProductManagement() {
                 value={filterCategoryId}
                 onChange={(e) => setFilterCategoryId(e.target.value)}
               >
-                <option value="">All Categories</option>
-                {categories.map((c: any) => (
+                <option value="">所有分类</option>
+                {categoryOptions.map((c: any) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
@@ -290,9 +314,9 @@ export default function ProductManagement() {
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+                <option value="">所有状态</option>
+                <option value="Active">上架</option>
+                <option value="Inactive">未上架</option>
               </select>
             </div>
           </div>
@@ -308,30 +332,63 @@ export default function ProductManagement() {
               <table className="w-full caption-bottom text-sm">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Product</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Category</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Price</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Status</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Date Added</th>
-                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground text-gray-500">Actions</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">图片</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">产品</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">分类</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">价格</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">状态</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">添加日期</th>
+                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground text-gray-500">操作</th>
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
                   {loading && products.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-4 text-center text-gray-500">Loading products...</td>
+                      <td colSpan={7} className="p-4 text-center text-gray-500">正在加载产品...</td>
                     </tr>
                   ) : products.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-gray-500">
+                      <td colSpan={7} className="p-8 text-center text-gray-500">
                         <div className="flex flex-col items-center gap-2">
                           <Package className="w-8 h-8 text-gray-300" />
-                          <p>No products found.</p>
+                          <p>未找到产品。</p>
                         </div>
                       </td>
                     </tr>
                   ) : products.map((product: any) => (
                     <tr key={product.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted hover:bg-gray-50">
+                      <td className="p-4 align-middle">
+                        {product.mainImage ? (
+                          <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden shrink-0 relative">
+                            <img 
+                              src={product.mainImage.startsWith('http') ? product.mainImage : 
+                                   product.mainImage.startsWith('/uploads') ? 
+                                   `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${product.mainImage}` :
+                                   product.mainImage} 
+                              alt={product.name_zh || product.name_en || 'Product'} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  target.style.display = 'none';
+                                  const fallback = parent.querySelector('.image-fallback') as HTMLElement;
+                                  if (fallback) {
+                                    fallback.style.display = 'flex';
+                                  }
+                                }
+                              }}
+                            />
+                            <div className="absolute inset-0 w-16 h-16 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center text-gray-400 text-xs pointer-events-none image-fallback" style={{ display: 'none' }}>
+                              无图片
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                            无图片
+                          </div>
+                        )}
+                      </td>
                       <td className="p-4 align-middle">
                         <div className="flex flex-col">
                           <span className="font-medium text-gray-900">{product.name_zh}</span>
@@ -342,7 +399,7 @@ export default function ProductManagement() {
                       <td className="p-4 align-middle font-medium text-gray-900">${product.price}</td>
                       <td className="p-4 align-middle">
                         <Badge variant={product.isActive ? 'success' : 'danger'}>
-                           {product.isActive ? 'Active' : 'Inactive'}
+                           {product.isActive ? '上架' : '未上架'}
                         </Badge>
                       </td>
                       <td className="p-4 align-middle text-gray-500">
@@ -355,7 +412,7 @@ export default function ProductManagement() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => openDetails(product)}
-                            title="View Details"
+                            title="查看详情"
                           >
                             <Eye className="h-4 w-4 text-slate-600" />
                           </Button>
@@ -364,7 +421,7 @@ export default function ProductManagement() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => openEdit(product)}
-                            title="Edit Product"
+                            title="编辑产品"
                           >
                             <Edit className="h-4 w-4 text-blue-600" />
                           </Button>
@@ -373,7 +430,7 @@ export default function ProductManagement() {
                             size="sm"
                             className={`h-8 w-8 p-0 ${product.isActive ? 'hover:bg-red-50 border-red-200' : 'hover:bg-green-50 border-green-200'}`}
                             onClick={() => setToggleTarget(product)}
-                            title={product.isActive ? 'Unpublish' : 'Publish'}
+                            title={product.isActive ? '下架' : '上架'}
                           >
                             {product.isActive ? (
                               <XCircle className="h-4 w-4 text-red-600" />
@@ -386,7 +443,7 @@ export default function ProductManagement() {
                             size="sm"
                             className="h-8 w-8 p-0 hover:bg-red-50 border-red-200"
                             onClick={() => setDeleteTarget(product)}
-                            title="Delete Product"
+                            title="删除产品"
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
@@ -411,14 +468,14 @@ export default function ProductManagement() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Delete product?"
+        title="删除产品？"
         description={
           deleteTarget
-            ? `This will permanently delete "${deleteTarget.name_en || deleteTarget.name_zh}".`
+            ? `这将永久删除 "${deleteTarget.name_en || deleteTarget.name_zh}"。`
             : undefined
         }
-        confirmText="Delete"
-        cancelText="Cancel"
+        confirmText="删除"
+        cancelText="取消"
         confirmDisabled={loading}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null)
@@ -431,10 +488,10 @@ export default function ProductManagement() {
 
       <ConfirmModal
         open={!!toggleTarget}
-        title={toggleTarget?.isActive ? "Unpublish product?" : "Publish product?"}
-        description={toggleTarget ? `Product: ${toggleTarget.name_en || toggleTarget.name_zh}` : undefined}
-        confirmText={toggleTarget?.isActive ? "Unpublish" : "Publish"}
-        cancelText="Cancel"
+        title={toggleTarget?.isActive ? "下架产品？" : "上架产品？"}
+        description={toggleTarget ? `产品: ${toggleTarget.name_en || toggleTarget.name_zh}` : undefined}
+        confirmText={toggleTarget?.isActive ? "下架" : "上架"}
+        cancelText="取消"
         confirmDisabled={loading}
         onOpenChange={(open) => {
           if (!open) setToggleTarget(null)
@@ -449,7 +506,7 @@ export default function ProductManagement() {
         open={formOpen}
         mode={formMode}
         loading={loading}
-        categories={categories.map((c: any) => ({ id: c.id, name: c.name }))}
+        categories={categoryOptions}
         initialValues={
           formMode === "edit" && formInitial
             ? {

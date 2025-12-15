@@ -66,9 +66,9 @@ export function OrderDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-gray-900">Order Details</DialogTitle>
+          <DialogTitle className="text-2xl text-gray-900">订单详情</DialogTitle>
           <DialogDescription className="text-gray-500">
-            {order?.orderNumber ? `Order #${order.orderNumber}` : "Viewing Order Information"}
+            {order?.orderNumber ? `订单 #${order.orderNumber}` : "查看订单信息"}
           </DialogDescription>
         </DialogHeader>
 
@@ -79,7 +79,7 @@ export function OrderDetailsModal({
         ) : error ? (
           <div className="p-4 bg-red-50 text-red-700 rounded-lg">{error}</div>
         ) : !order ? (
-          <div className="text-center p-8 text-gray-500">No order data available.</div>
+          <div className="text-center p-8 text-gray-500">暂无订单数据。</div>
         ) : (
           <div className="space-y-8">
             <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-100">
@@ -89,10 +89,10 @@ export function OrderDetailsModal({
                 className="rounded-full"
                 onClick={async () => {
                   const ok = await copyText(order.orderNumber);
-                  ok ? toast.success("Copied") : toast.error("Failed");
+                  ok ? toast.success("已复制") : toast.error("复制失败");
                 }}
               >
-                Copy Order #
+                复制订单号
               </Button>
               <Button
                 size="sm"
@@ -101,10 +101,10 @@ export function OrderDetailsModal({
                 disabled={!order.trackingNumber}
                 onClick={async () => {
                   const ok = await copyText(order.trackingNumber);
-                  ok ? toast.success("Copied") : toast.error("Failed");
+                  ok ? toast.success("已复制") : toast.error("复制失败");
                 }}
               >
-                Copy Tracking
+                复制物流单号
               </Button>
               <Button
                 size="sm"
@@ -113,21 +113,21 @@ export function OrderDetailsModal({
                 disabled={!shippingAddressText}
                 onClick={async () => {
                   const ok = await copyText(shippingAddressText);
-                  ok ? toast.success("Copied") : toast.error("Failed");
+                  ok ? toast.success("已复制") : toast.error("复制失败");
                 }}
               >
-                Copy Address
+                复制地址
               </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">Customer & Status</h4>
+                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">客户与状态</h4>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500">Email</span> <span className="text-gray-900 font-medium">{order.user?.email}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Username</span> <span className="text-gray-900">{order.user?.username || "-"}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">邮箱</span> <span className="text-gray-900 font-medium">{order.user?.email}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">用户名</span> <span className="text-gray-900">{order.user?.username || "-"}</span></div>
                   <div className="border-t border-gray-200 my-2"></div>
-                  <div className="flex justify-between items-center"><span className="text-gray-500">Status</span> 
+                  <div className="flex justify-between items-center"><span className="text-gray-500">状态</span> 
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                       order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
                       order.status === 'SHIPPED' ? 'bg-yellow-100 text-yellow-700' :
@@ -135,13 +135,13 @@ export function OrderDetailsModal({
                       'bg-blue-100 text-blue-700'
                     }`}>{order.status}</span>
                   </div>
-                  <div className="flex justify-between"><span className="text-gray-500">Payment</span> <span className="text-gray-900 font-medium">{order.paymentStatus}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Tracking</span> <span className="font-mono text-gray-700">{order.trackingNumber || "-"}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">支付状态</span> <span className="text-gray-900 font-medium">{order.paymentStatus}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">物流单号</span> <span className="font-mono text-gray-700">{order.trackingNumber || "-"}</span></div>
                 </div>
               </div>
 
               <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">Shipping Address</h4>
+                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">配送地址</h4>
                 <div className="text-sm text-gray-700 leading-relaxed">
                   {order.shippingAddress ? (
                     <div className="space-y-1">
@@ -157,7 +157,7 @@ export function OrderDetailsModal({
                       {order.shippingAddress.phone && <div className="text-gray-500 mt-2">{order.shippingAddress.phone}</div>}
                     </div>
                   ) : (
-                    <div className="italic text-gray-400">No shipping address provided.</div>
+                    <div className="italic text-gray-400">未提供配送地址。</div>
                   )}
                 </div>
               </div>
@@ -165,16 +165,16 @@ export function OrderDetailsModal({
 
             <div className="border rounded-xl overflow-hidden">
               <div className="bg-gray-100 px-5 py-3 border-b border-gray-200">
-                <h4 className="font-semibold text-gray-900 uppercase tracking-wider text-xs">Order Items</h4>
+                <h4 className="font-semibold text-gray-900 uppercase tracking-wider text-xs">订单商品</h4>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200 text-left">
-                      <th className="px-5 py-3 font-medium text-gray-500">Product</th>
-                      <th className="px-5 py-3 font-medium text-gray-500 text-center">Qty</th>
-                      <th className="px-5 py-3 font-medium text-gray-500 text-right">Price</th>
-                      <th className="px-5 py-3 font-medium text-gray-500 text-right">Total</th>
+                      <th className="px-5 py-3 font-medium text-gray-500">商品</th>
+                      <th className="px-5 py-3 font-medium text-gray-500 text-center">数量</th>
+                      <th className="px-5 py-3 font-medium text-gray-500 text-right">单价</th>
+                      <th className="px-5 py-3 font-medium text-gray-500 text-right">小计</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -194,10 +194,10 @@ export function OrderDetailsModal({
               </div>
               <div className="bg-gray-50 px-5 py-4 border-t border-gray-200">
                  <div className="flex flex-col gap-2 items-end text-sm">
-                    <div className="flex justify-between w-48"><span className="text-gray-500">Subtotal:</span> <span className="text-gray-900">${order.subtotal}</span></div>
-                    <div className="flex justify-between w-48"><span className="text-gray-500">Tax:</span> <span className="text-gray-900">${order.tax}</span></div>
-                    <div className="flex justify-between w-48"><span className="text-gray-500">Shipping:</span> <span className="text-gray-900">${order.shipping}</span></div>
-                    <div className="flex justify-between w-48 border-t border-gray-300 pt-2 mt-1"><span className="font-bold text-gray-900">Total:</span> <span className="font-bold text-blue-600 text-lg">${order.total}</span></div>
+                    <div className="flex justify-between w-48"><span className="text-gray-500">小计:</span> <span className="text-gray-900">${order.subtotal}</span></div>
+                    <div className="flex justify-between w-48"><span className="text-gray-500">税费:</span> <span className="text-gray-900">${order.tax}</span></div>
+                    <div className="flex justify-between w-48"><span className="text-gray-500">运费:</span> <span className="text-gray-900">${order.shipping}</span></div>
+                    <div className="flex justify-between w-48 border-t border-gray-300 pt-2 mt-1"><span className="font-bold text-gray-900">总计:</span> <span className="font-bold text-blue-600 text-lg">${order.total}</span></div>
                  </div>
               </div>
             </div>
@@ -206,7 +206,7 @@ export function OrderDetailsModal({
 
         <DialogFooter className="mt-6 border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-full px-8">
-            Close
+            关闭
           </Button>
         </DialogFooter>
       </DialogContent>

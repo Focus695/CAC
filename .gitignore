@@ -47,3 +47,83 @@ backend/prisma/migrations/
 **/public/workbox-*.js
 **/public/worker-*.js
 
+# Uploads (user-uploaded files)
+backend/uploads/
+uploads/
+
+# Logs
+logs/
+*.log
+
+# Database
+*.sqlite
+*.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Editor backup files
+*~
+*.swp
+*.swo
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+Desktop.ini
+ehthumbs.db
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Sensitive files
+*.pem
+*.key
+*.cert
+secrets.json
+credentials.json
+
+# Claude AI相关
+.claude/
+*.claude.md
+
+# 环境变量（全面覆盖）
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env.local
+frontend/.env.*.local
+
+# 数据库文件（补充）
+*.sqlite3
+*.sqlite-journal
+*.db-shm
+*.db-wal
+
+# IDE和编辑器（补充）
+.fleet/
+.vscode/settings.json
+.vscode/launch.json
+*.sublime-workspace
+*.sublime-project
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+*.lcov
+
+# 备份文件
+*.backup
+*.bak
+
+# Prisma相关
+backend/prisma/dev.db
+

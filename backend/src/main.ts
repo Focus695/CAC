@@ -12,14 +12,26 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { AuditLogger } from './common/logger/audit-logger';
 import * as express from 'express';
 import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { UPLOADS_DIRNAME, UPLOADS_ROUTE_PREFIX } from './modules/admin/uploads.constants';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: true,
+  });
   const configService = app.get(ConfigService);
 
-  // Security
-  app.use(helmet());
+  // Increase body size limit for file uploads (10MB)
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+  // Security - Configure Helmet to allow cross-origin images
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginEmbedderPolicy: false,
+    })
+  );
   app.use(compression());
   app.use(cookieParser());
 
@@ -35,8 +47,39 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Serve uploaded images
-  app.use(UPLOADS_ROUTE_PREFIX, express.static(join(process.cwd(), UPLOADS_DIRNAME)));
+  // Ensure uploads directory exists
+  const uploadsPath = join(process.cwd(), UPLOADS_DIRNAME);
+  if (!existsSync(uploadsPath)) {
+    mkdirSync(uploadsPath, { recursive: true });
+    console.log(`Created uploads directory: ${uploadsPath}`);
+  }
+
+  // Serve uploaded images with proper CORS headers
+  app.use(
+    UPLOADS_ROUTE_PREFIX,
+    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      // Set CORS headers for static files
+      const origin = req.headers.origin;
+      if (origin && /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      next();
+    },
+    express.static(uploadsPath, {
+      setHeaders: (res: express.Response, path: string) => {
+        // Set proper content type for images
+        if (path.endsWith('.png')) {
+          res.setHeader('Content-Type', 'image/png');
+        } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+          res.setHeader('Content-Type', 'image/jpeg');
+        }
+        // Allow cross-origin access
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      },
+    })
+  );
 
   // Default admin user creation removed for security reasons
   // Use API or database migration to create admin users

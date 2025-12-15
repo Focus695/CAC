@@ -5,16 +5,11 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
   constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (request: Request) => {
-          // 从cookie中提取token
-          return request.cookies?.user_access_token;
-        },
-        // 保留从请求头提取的功能，以便向后兼容
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (request: Request) => request.cookies?.admin_access_token,
       ]),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET'),
@@ -25,3 +20,4 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return { userId: payload.sub, email: payload.email, role: payload.role };
   }
 }
+

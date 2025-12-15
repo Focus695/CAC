@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiService } from "@/services/api";
+import toast from "react-hot-toast";
 
 type CategoryOption = { id: string; name: string };
 
@@ -87,17 +88,17 @@ export function ProductFormModal({
 
   const errors = useMemo(() => {
     const errs: Record<string, string> = {};
-    if (!nameZh.trim()) errs.nameZh = "Chinese name is required.";
-    if (!nameEn.trim()) errs.nameEn = "English name is required.";
+    if (!nameZh.trim()) errs.nameZh = "中文名称是必填项。";
+    if (!nameEn.trim()) errs.nameEn = "英文名称是必填项。";
     const p = Number(price);
-    if (!Number.isFinite(p) || p <= 0) errs.price = "Price must be a number > 0.";
+    if (!Number.isFinite(p) || p <= 0) errs.price = "价格必须大于 0。";
     const s = Number(stock);
-    if (!Number.isInteger(s) || s < 0) errs.stock = "Stock must be an integer ≥ 0.";
-    if (!categoryId) errs.categoryId = "Category is required.";
+    if (!Number.isInteger(s) || s < 0) errs.stock = "库存必须为大于等于 0 的整数。";
+    if (!categoryId) errs.categoryId = "分类是必填项。";
 
     // Publish rules (when Active is checked)
     if (isActive) {
-      if (!mainImage.trim()) errs.mainImage = "Main image is required to publish.";
+      if (!mainImage.trim()) errs.mainImage = "发布产品需要主图。";
       const hasSection = (sections || []).some((sec) => {
         const tzh = sec.title_zh && sec.title_zh.trim();
         const ten = sec.title_en && sec.title_en.trim();
@@ -105,7 +106,7 @@ export function ProductFormModal({
         const cen = sec.content_en && String(sec.content_en).trim();
         return Boolean(tzh || ten || czh || cen);
       });
-      if (!hasSection) errs.sections = "At least 1 section is required to publish.";
+      if (!hasSection) errs.sections = "发布产品至少需要 1 个介绍部分。";
     }
     return errs;
   }, [nameZh, nameEn, price, stock, categoryId, isActive, mainImage, sections]);
@@ -173,19 +174,19 @@ export function ProductFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-blue-900">{mode === "create" ? "Add New Product" : "Edit Product"}</DialogTitle>
+          <DialogTitle className="text-2xl text-blue-900">{mode === "create" ? "添加新产品" : "编辑产品"}</DialogTitle>
           <DialogDescription className="text-gray-500">
-            Fill in the details below. Fields marked with * are required.
+            请填写以下详细信息。标记 * 的字段为必填项。
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 py-4">
           <div className="md:col-span-2">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Basic Information</h3>
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">基本信息</h3>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">Chinese Name *</Label>
+            <Label className="text-gray-700 font-medium">中文名称 *</Label>
             <Input 
               value={nameZh} 
               onChange={(e) => setNameZh(e.target.value)} 
@@ -196,7 +197,7 @@ export function ProductFormModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">English Name *</Label>
+            <Label className="text-gray-700 font-medium">英文名称 *</Label>
             <Input 
               value={nameEn} 
               onChange={(e) => setNameEn(e.target.value)} 
@@ -207,7 +208,7 @@ export function ProductFormModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">Category *</Label>
+            <Label className="text-gray-700 font-medium">分类 *</Label>
             <div className="relative">
               <select
                 className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all appearance-none"
@@ -231,16 +232,16 @@ export function ProductFormModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">SKU (Optional)</Label>
-            <Input value={sku} onChange={(e) => setSku(e.target.value)} disabled={!!loading} placeholder="Stock Keeping Unit" />
+            <Label className="text-gray-700 font-medium">SKU (可选)</Label>
+            <Input value={sku} onChange={(e) => setSku(e.target.value)} disabled={!!loading} placeholder="库存单位" />
           </div>
 
           <div className="md:col-span-2 mt-2">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Pricing & Inventory</h3>
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">定价与库存</h3>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">Price ($) *</Label>
+            <Label className="text-gray-700 font-medium">价格 ($) *</Label>
             <Input
               type="number"
               step="0.01"
@@ -252,7 +253,7 @@ export function ProductFormModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">Stock *</Label>
+            <Label className="text-gray-700 font-medium">库存 *</Label>
             <Input
               type="number"
               step="1"
@@ -264,11 +265,11 @@ export function ProductFormModal({
           </div>
 
           <div className="md:col-span-2 mt-2">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Media & Status</h3>
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">媒体与状态</h3>
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <Label className="text-gray-700 font-medium">Main Image URL</Label>
+            <Label className="text-gray-700 font-medium">主图 URL</Label>
             <div className="flex flex-col md:flex-row gap-2">
               <Input
               value={mainImage} 
@@ -287,19 +288,37 @@ export function ProductFormModal({
                       const file = e.target.files?.[0];
                       e.target.value = '';
                       if (!file) return;
+                      
+                      // Check file size (10MB limit)
+                      const maxSize = 10 * 1024 * 1024; // 10MB
+                      if (file.size > maxSize) {
+                        toast.error(`File size exceeds 10MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB. Please compress the image or choose a smaller file.`);
+                        return;
+                      }
+                      
                       try {
                         setUploadingMain(true);
                         const res = await apiService.uploadImage(file);
-                        setMainImage(res?.url || '');
+                        if (res?.url) {
+                          setMainImage(res.url);
+                          toast.success('Image uploaded successfully');
+                        } else {
+                          throw new Error('No URL returned from server');
+                        }
                       } catch (err: any) {
                         console.error('Upload main image failed:', err);
-                        // keep silent here; backend will also validate on publish
+                        let errorMessage = err?.message || 'Failed to upload image. Please try again.';
+                        // Handle 413 error specifically
+                        if (errorMessage.includes('413') || errorMessage.includes('Payload Too Large') || errorMessage.includes('File too large')) {
+                          errorMessage = 'File is too large. Maximum size is 10MB. Please compress the image or choose a smaller file.';
+                        }
+                        toast.error(errorMessage);
                       } finally {
                         setUploadingMain(false);
                       }
                     }}
                   />
-                  {uploadingMain ? 'Uploading...' : 'Upload'}
+                  {uploadingMain ? '上传中...' : '上传'}
                 </label>
               </div>
             </div>
@@ -307,12 +326,12 @@ export function ProductFormModal({
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <Label className="text-gray-700 font-medium">Detail Images</Label>
-            <p className="text-xs text-gray-500">Upload up to 9 images. You can reorder by drag & drop or buttons.</p>
+            <Label className="text-gray-700 font-medium">详情图片</Label>
+            <p className="text-xs text-gray-500">最多上传 9 张图片。可通过拖拽或按钮重新排序。</p>
 
             {detailImages.length === 0 ? (
               <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                No detail images yet.
+                暂无详情图片。
               </div>
             ) : (
               <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
@@ -362,7 +381,7 @@ export function ProductFormModal({
                           className="h-7 px-2 bg-white/90"
                           disabled={!!loading || idx === 0}
                           onClick={() => moveDetailImage(idx, idx - 1)}
-                          title="Move left"
+                          title="向左移动"
                         >
                           ←
                         </Button>
@@ -373,7 +392,7 @@ export function ProductFormModal({
                           className="h-7 px-2 bg-white/90"
                           disabled={!!loading || idx === detailImages.length - 1}
                           onClick={() => moveDetailImage(idx, idx + 1)}
-                          title="Move right"
+                          title="向右移动"
                         >
                           →
                         </Button>
@@ -385,7 +404,7 @@ export function ProductFormModal({
                         className="h-7 px-2 bg-white/90 border-red-200 hover:bg-red-50"
                         disabled={!!loading}
                         onClick={() => removeDetailImage(idx)}
-                        title="Remove"
+                        title="删除"
                       >
                         ✕
                       </Button>
@@ -407,23 +426,46 @@ export function ProductFormModal({
                     const files = Array.from(e.target.files || []);
                     e.target.value = '';
                     if (files.length === 0) return;
+                    
+                    // Check file sizes (10MB limit per file)
+                    const maxSize = 10 * 1024 * 1024; // 10MB
+                    const oversizedFiles = files.filter(f => f.size > maxSize);
+                    if (oversizedFiles.length > 0) {
+                      const fileNames = oversizedFiles.map(f => f.name).join(', ');
+                      toast.error(`Some files exceed 10MB limit: ${fileNames}. Please compress the images or choose smaller files.`);
+                      return;
+                    }
+                    
                     try {
                       setUploadingDetails(true);
                       const remaining = Math.max(0, 9 - detailImages.length);
                       const toUpload = remaining > 0 ? files.slice(0, remaining) : [];
-                      if (toUpload.length === 0) return;
+                      if (toUpload.length === 0) {
+                        toast.error('Maximum 9 detail images allowed');
+                        return;
+                      }
                       const res = await apiService.uploadImages(toUpload);
                       const urls = Array.isArray(res?.images) ? res.images.map((x: any) => x?.url).filter(Boolean) : [];
-                      if (urls.length === 0) return;
+                      if (urls.length === 0) {
+                        toast.error('No images were uploaded. Please try again.');
+                        return;
+                      }
                       addDetailImageUrls(urls);
+                      toast.success(`${urls.length} image(s) uploaded successfully`);
                     } catch (err: any) {
                       console.error('Upload detail images failed:', err);
+                      let errorMessage = err?.message || 'Failed to upload images. Please try again.';
+                      // Handle 413 error specifically
+                      if (errorMessage.includes('413') || errorMessage.includes('Payload Too Large') || errorMessage.includes('File too large')) {
+                        errorMessage = 'One or more files are too large. Maximum size is 10MB per file. Please compress the images or choose smaller files.';
+                      }
+                      toast.error(errorMessage);
                     } finally {
                       setUploadingDetails(false);
                     }
                   }}
                 />
-                {uploadingDetails ? 'Uploading...' : 'Upload Images'}
+                {uploadingDetails ? '上传中...' : '上传图片'}
               </label>
 
               <div className="flex-1 w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-2">
@@ -431,7 +473,7 @@ export function ProductFormModal({
                   value={detailImageUrlInput}
                   onChange={(e) => setDetailImageUrlInput(e.target.value)}
                   disabled={!!loading}
-                  placeholder="Paste image URL and click Add"
+                  placeholder="粘贴图片 URL 并点击添加"
                 />
                 <Button
                   type="button"
@@ -442,7 +484,7 @@ export function ProductFormModal({
                     setDetailImageUrlInput('');
                   }}
                 >
-                  Add
+                  添加
                 </Button>
                 <Button
                   type="button"
@@ -451,27 +493,27 @@ export function ProductFormModal({
                   onClick={() => setDetailImages([])}
                   className="text-gray-600"
                 >
-                  Clear All
+                  清空全部
                 </Button>
               </div>
             </div>
           </div>
 
           <div className="md:col-span-2 mt-2">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Product Introduction Sections (0~3)</h3>
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">产品介绍部分 (0~3)</h3>
           </div>
 
           <div className="md:col-span-2 space-y-4">
             {sections.length === 0 ? (
               <div className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                No sections yet. You can add up to 3 sections (each supports ZH/EN title + content).
+                暂无部分。最多可添加 3 个部分（每个部分支持中英文标题和内容）。
               </div>
             ) : null}
 
             {sections.map((section, idx) => (
               <div key={idx} className="border rounded-xl p-4 bg-white">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-sm font-semibold text-gray-900">Section {idx + 1}</div>
+                  <div className="text-sm font-semibold text-gray-900">部分 {idx + 1}</div>
                   <Button
                     type="button"
                     variant="ghost"
@@ -479,13 +521,13 @@ export function ProductFormModal({
                     disabled={!!loading}
                     onClick={() => setSections((cur) => cur.filter((_, i) => i !== idx))}
                   >
-                    Remove
+                    删除
                   </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium">Title (ZH)</Label>
+                    <Label className="text-gray-700 font-medium">标题 (中文)</Label>
                     <Input
                       value={section.title_zh ?? ""}
                       onChange={(e) =>
@@ -498,7 +540,7 @@ export function ProductFormModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium">Title (EN)</Label>
+                    <Label className="text-gray-700 font-medium">标题 (英文)</Label>
                     <Input
                       value={section.title_en ?? ""}
                       onChange={(e) =>
@@ -512,7 +554,7 @@ export function ProductFormModal({
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-gray-700 font-medium">Content (ZH)</Label>
+                    <Label className="text-gray-700 font-medium">内容 (中文)</Label>
                     <textarea
                       className="flex min-h-[90px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
                       value={section.content_zh ?? ""}
@@ -527,7 +569,7 @@ export function ProductFormModal({
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-gray-700 font-medium">Content (EN)</Label>
+                    <Label className="text-gray-700 font-medium">内容 (英文)</Label>
                     <textarea
                       className="flex min-h-[90px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
                       value={section.content_en ?? ""}
@@ -545,14 +587,14 @@ export function ProductFormModal({
             ))}
 
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">Max 3 sections.</p>
+              <p className="text-xs text-gray-500">最多 3 个部分。</p>
               <Button
                 type="button"
                 variant="outline"
                 disabled={!!loading || sections.length >= 3}
                 onClick={() => setSections((cur) => [...cur, {}])}
               >
-                Add Section
+                添加部分
               </Button>
             </div>
             {errors.sections ? <p className="text-sm text-red-600 font-medium">{errors.sections}</p> : null}
@@ -567,20 +609,20 @@ export function ProductFormModal({
               onChange={(e) => setIsActive(e.target.checked)}
               disabled={!!loading}
             />
-            <Label htmlFor="isActive" className="text-gray-900 font-medium cursor-pointer">Product is Active (Visible to customers)</Label>
+            <Label htmlFor="isActive" className="text-gray-900 font-medium cursor-pointer">产品已上架 (对客户可见)</Label>
           </div>
         </div>
 
         <DialogFooter className="mt-8 border-t pt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={!!loading} className="text-gray-600">
-            Cancel
+            取消
           </Button>
           <Button
             disabled={!canSubmit}
             onClick={() => onSubmit(buildValues())}
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8"
           >
-            {mode === "create" ? "Create Product" : "Save Changes"}
+            {mode === "create" ? "创建产品" : "保存更改"}
           </Button>
         </DialogFooter>
       </DialogContent>

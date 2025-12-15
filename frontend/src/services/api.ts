@@ -211,9 +211,8 @@ export const apiService = {
       return handleApiResponse<any[]>(response);
     } catch (error) {
       console.error('获取分类失败:', error);
-      // 如果API请求失败，返回静态数据作为降级方案
-      const { Category } = await import('../types');
-      return Object.values(Category);
+      // If API fails, return empty list to avoid mismatched shapes (enum vs DB categories)
+      return [];
     }
   },
 
@@ -385,6 +384,19 @@ export const apiService = {
     }
   },
 
+  // 管理员登录（使用独立的 admin cookie）
+  async adminLogin(loginData: { email: string; password: string }): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/admin/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(loginData),
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
   // 获取用户信息
   async getProfile(): Promise<any> {
     try {
@@ -396,6 +408,14 @@ export const apiService = {
       console.error('获取用户信息失败:', error);
       throw error;
     }
+  },
+
+  // 获取管理员信息（仅检查 admin cookie）
+  async getAdminProfile(): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/admin/profile`, {
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
   },
 
   // Admin endpoints
@@ -519,6 +539,50 @@ export const apiService = {
       console.error('获取产品列表失败:', error);
       throw error;
     }
+  },
+
+  // Admin category management
+  async getAdminCategories(): Promise<any[]> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/categories`, {
+      credentials: 'include',
+    });
+    return handleApiResponse<any[]>(response);
+  },
+
+  async createCategory(categoryData: any): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoryData),
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
+  async updateCategory(categoryId: string, categoryData: any): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoryData),
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
+  async deleteCategory(categoryId: string): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
+  },
+
+  async toggleCategoryStatus(categoryId: string): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/admin/categories/${categoryId}/status`, {
+      method: 'PATCH',
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
   },
 
   async createProduct(productData: any): Promise<any> {
@@ -724,5 +788,14 @@ export const apiService = {
       console.error('退出登录失败:', error);
       throw error;
     }
+  },
+
+  // 管理员退出登录（只清理 admin cookie）
+  async adminLogout(): Promise<any> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth/admin/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    return handleApiResponse<any>(response);
   },
 };

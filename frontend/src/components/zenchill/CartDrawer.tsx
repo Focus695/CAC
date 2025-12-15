@@ -68,16 +68,43 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
               <p className="font-serif text-lg">Your bag is empty. Discover our treasures.</p>
             </div>
           ) : (
-            cartItems.map((item) => (
+            cartItems.map((item) => {
+              // Get image URL - support mainImage, detailImages, or images array
+              const productImage = (item.product as any).mainImage 
+                || ((item.product as any).detailImages && Array.isArray((item.product as any).detailImages) && (item.product as any).detailImages.length > 0 
+                  ? (item.product as any).detailImages[0] 
+                  : null)
+                || ((item.product as any).images && Array.isArray((item.product as any).images) && (item.product as any).images.length > 0 
+                  ? (item.product as any).images[0] 
+                  : null)
+                || (item.product as any).imageUrl
+                || '';
+
+              // Get product name - support name_en, name_zh, or name
+              const productName = (item.product as any).name_en 
+                || (item.product as any).name_zh 
+                || item.product.name 
+                || 'Unknown Product';
+
+              // Get category name - support category object or categoryId
+              const categoryName = (item.product as any).category?.name 
+                || (item.product as any).category 
+                || '';
+
+              return (
               <div key={item.id} className="flex gap-4 p-4 bg-white rounded-sm border border-stone-100 shadow-sm relative group">
                 <div className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-sm bg-stone-100">
-                  <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                  {productImage ? (
+                    <img src={productImage} alt={productName} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-400 text-xs">No Image</div>
+                  )}
                 </div>
 
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start">
-                      <h3 className="font-serif text-sandalwood font-medium">{item.product.name}</h3>
+                      <h3 className="font-serif text-sandalwood font-medium">{productName}</h3>
                       <button
                         onClick={() => removeCartItem(item.id)}
                         className="text-stone-300 hover:text-cinnabar transition-colors"
@@ -85,7 +112,9 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <p className="text-xs text-stone-500 mt-1">{item.product.category}</p>
+                    {categoryName && (
+                      <p className="text-xs text-stone-500 mt-1">{categoryName}</p>
+                    )}
                   </div>
 
                   <div className="flex justify-between items-end">
@@ -111,7 +140,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({
                   </div>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

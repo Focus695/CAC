@@ -19,10 +19,10 @@ import { Button } from '@/components/ui/button'
 
 export default function Dashboard() {
   const [stats, setStats] = useState([
-    { label: 'Total Users', value: '0', color: 'bg-blue-50 text-blue-600', icon: Users },
-    { label: 'Total Products', value: '0', color: 'bg-green-50 text-green-600', icon: Package },
-    { label: 'Total Orders', value: '0', color: 'bg-yellow-50 text-yellow-600', icon: ShoppingCart },
-    { label: 'Total Revenue', value: '$0', color: 'bg-purple-50 text-purple-600', icon: DollarSign },
+    { label: '总用户数', value: '0', color: 'bg-blue-50 text-blue-600', icon: Users },
+    { label: '总产品数', value: '0', color: 'bg-green-50 text-green-600', icon: Package },
+    { label: '总订单数', value: '0', color: 'bg-yellow-50 text-yellow-600', icon: ShoppingCart },
+    { label: '总收入', value: '$0', color: 'bg-purple-50 text-purple-600', icon: DollarSign },
   ])
 
   const [recentOrders, setRecentOrders] = useState([])
@@ -67,7 +67,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">仪表板</h1>
       </div>
 
       {/* Stats Grid */}
@@ -91,8 +91,8 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks you perform often</CardDescription>
+            <CardTitle>快捷操作</CardTitle>
+            <CardDescription>您经常执行的任务</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <Link href="/admin/users">
@@ -101,8 +101,8 @@ export default function Dashboard() {
                   <Users className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Manage Users</div>
-                  <div className="text-sm text-gray-500">View and edit users</div>
+                  <div className="font-medium text-gray-900">管理用户</div>
+                  <div className="text-sm text-gray-500">查看和编辑用户</div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
               </div>
@@ -114,8 +114,8 @@ export default function Dashboard() {
                   <Package className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Manage Products</div>
-                  <div className="text-sm text-gray-500">Inventory control</div>
+                  <div className="font-medium text-gray-900">管理产品</div>
+                  <div className="text-sm text-gray-500">库存控制</div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
               </div>
@@ -127,8 +127,8 @@ export default function Dashboard() {
                   <ShoppingCart className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">Manage Orders</div>
-                  <div className="text-sm text-gray-500">Process orders</div>
+                  <div className="font-medium text-gray-900">管理订单</div>
+                  <div className="text-sm text-gray-500">处理订单</div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
               </div>
@@ -136,7 +136,7 @@ export default function Dashboard() {
 
             <Link href="/admin/products/new">
               <Button className="w-full mt-2" variant="outline">
-                <Plus className="mr-2 h-4 w-4" /> Add New Product
+                <Plus className="mr-2 h-4 w-4" /> 添加新产品
               </Button>
             </Link>
           </CardContent>
@@ -146,20 +146,20 @@ export default function Dashboard() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Recent Orders</CardTitle>
-              <CardDescription>Latest transactions from users</CardDescription>
+              <CardTitle>最近订单</CardTitle>
+              <CardDescription>用户的最新交易</CardDescription>
             </div>
             <Link href="/admin/orders">
               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                View All <ArrowRight className="ml-2 h-4 w-4" />
+                查看全部 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </CardHeader>
           <CardContent>
             {loading ? (
-               <div className="text-center py-8 text-gray-500">Loading orders...</div>
+               <div className="text-center py-8 text-gray-500">正在加载订单...</div>
             ) : recentOrders.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No recent orders found.</div>
+              <div className="text-center py-8 text-gray-500">暂无最近订单。</div>
             ) : (
               <div className="space-y-4">
                 {recentOrders.map((order: any) => (

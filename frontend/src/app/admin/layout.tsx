@@ -12,6 +12,7 @@ import {
   LayoutDashboard, 
   Users, 
   Package, 
+  Tags,
   ShoppingCart, 
   LogOut, 
   Menu,
@@ -37,7 +38,7 @@ export default function AdminLayout({
     async function checkAuthentication() {
       try {
         // Check authentication by calling a protected API endpoint (cookie-based)
-        const profile = await apiService.getProfile()
+        const profile = await apiService.getAdminProfile()
         const isAdmin = profile?.role === 'ADMIN'
 
         if (pathname === '/admin/login' && isAdmin) {
@@ -66,7 +67,7 @@ export default function AdminLayout({
   useEffect(() => {
     async function fetchAdminUser() {
       try {
-        const profile = await apiService.getProfile()
+        const profile = await apiService.getAdminProfile()
         if (profile?.role === 'ADMIN') setAdminUser(profile)
       } catch (error) {
         console.error('Failed to fetch admin user data:', error);
@@ -83,7 +84,7 @@ export default function AdminLayout({
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-500 font-medium">Loading admin panel...</p>
+          <p className="text-gray-500 font-medium">正在加载管理面板...</p>
         </div>
       </div>
     )
@@ -102,10 +103,11 @@ export default function AdminLayout({
   }
 
   const navItems = [
-    { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/users', label: 'User Management', icon: Users },
-    { href: '/admin/products', label: 'Products', icon: Package },
-    { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+    { href: '/admin/dashboard', label: '仪表板', icon: LayoutDashboard },
+    { href: '/admin/users', label: '用户管理', icon: Users },
+    { href: '/admin/products', label: '产品管理', icon: Package },
+    { href: '/admin/categories', label: '分类管理', icon: Tags },
+    { href: '/admin/orders', label: '订单管理', icon: ShoppingCart },
   ]
 
   // Render admin layout for authenticated users
@@ -124,7 +126,7 @@ export default function AdminLayout({
                   <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-xl">A</span>
                   </div>
-                  <span className="text-xl font-bold text-gray-900">Admin Panel</span>
+                  <span className="text-xl font-bold text-gray-900">管理后台</span>
                 </div>
 
                 <nav className="space-y-1">
@@ -170,7 +172,7 @@ export default function AdminLayout({
                       className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100"
                       onClick={async () => {
                         try {
-                          await apiService.logout();
+                          await apiService.adminLogout();
                         } catch (error) {
                           console.error('Logout failed:', error);
                         } finally {
@@ -179,7 +181,7 @@ export default function AdminLayout({
                       }}
                     >
                       <LogOut className="w-4 h-4 mr-2" />
-                      Logout
+                      退出登录
                     </Button>
                   </div>
                 </div>
@@ -197,7 +199,7 @@ export default function AdminLayout({
                   >
                     <Menu className="w-6 h-6 text-gray-600" />
                   </button>
-                  <span className="font-bold text-gray-900">Admin Panel</span>
+                  <span className="font-bold text-gray-900">管理后台</span>
                 </div>
               </div>
 

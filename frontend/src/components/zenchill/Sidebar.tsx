@@ -6,7 +6,6 @@ import { NAV_LINKS } from '@/constants';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import { useUser } from '@/contexts/UserContext';
-import LanguageSwitcher from '../LanguageSwitcher';
 
 interface SidebarProps {
   activeTab: string;
@@ -140,9 +139,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
                 Sign Up
               </Button>
             </Link>
-            <div className="mt-4">
-              <LanguageSwitcher />
-            </div>
             <p className="text-[10px] text-stone-400 font-light leading-relaxed opacity-60 mt-4">
               © 2024 Zenchill.
             </p>
@@ -204,8 +200,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, cartCount, on
                   </div>
                 </div>
 
-                {/* Language Switcher */}
-                <LanguageSwitcher />
               </div>
             </div>
             <p className="text-[10px] text-stone-400 font-light leading-relaxed opacity-60">

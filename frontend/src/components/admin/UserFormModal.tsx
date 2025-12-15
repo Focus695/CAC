@@ -47,7 +47,7 @@ export function UserFormModal({
 
   const errors = useMemo(() => {
     const errs: Record<string, string> = {};
-    if (username && username.trim().length < 2) errs.username = "Username must be at least 2 characters.";
+    if (username && username.trim().length < 2) errs.username = "用户名至少需要 2 个字符。";
     return errs;
   }, [username]);
 
@@ -57,15 +57,15 @@ export function UserFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-xl text-gray-900">Edit User</DialogTitle>
+          <DialogTitle className="text-xl text-gray-900">编辑用户</DialogTitle>
           <DialogDescription className="text-gray-500">
-            {userEmail ? `Editing user: ${userEmail}` : "Update user details below."}
+            {userEmail ? `正在编辑用户: ${userEmail}` : "请在下方更新用户详细信息。"}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">Username</Label>
+            <Label className="text-gray-700 font-medium">用户名</Label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -77,7 +77,7 @@ export function UserFormModal({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-700 font-medium">Role</Label>
+            <Label className="text-gray-700 font-medium">角色</Label>
             <div className="relative">
               <select
                 className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all appearance-none"
@@ -85,9 +85,9 @@ export function UserFormModal({
                 onChange={(e) => setRole(e.target.value as any)}
                 disabled={!!loading}
               >
-                <option value="CUSTOMER">Customer</option>
-                <option value="MODERATOR">Moderator</option>
-                <option value="ADMIN">Admin</option>
+                <option value="CUSTOMER">客户</option>
+                <option value="MODERATOR">版主</option>
+                <option value="ADMIN">管理员</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                 <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
@@ -106,13 +106,13 @@ export function UserFormModal({
               onChange={(e) => setIsActive(e.target.checked)}
               disabled={!!loading}
             />
-            <Label htmlFor="isActive" className="text-gray-900 font-medium cursor-pointer">Active User</Label>
+            <Label htmlFor="isActive" className="text-gray-900 font-medium cursor-pointer">激活用户</Label>
           </div>
         </div>
 
         <DialogFooter className="mt-6">
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={!!loading} className="text-gray-600">
-            Cancel
+            取消
           </Button>
           <Button
             disabled={!canSubmit}
@@ -125,7 +125,7 @@ export function UserFormModal({
             }
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6"
           >
-            Save Changes
+            保存更改
           </Button>
         </DialogFooter>
       </DialogContent>

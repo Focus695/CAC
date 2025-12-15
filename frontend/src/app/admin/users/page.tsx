@@ -81,7 +81,7 @@ export default function UserManagement() {
         setPagination(result.pagination)
       } catch (error) {
         console.error('Failed to fetch users:', error)
-        setError('Failed to fetch users')
+        setError('获取用户失败')
       }
       finally {
         setLoading(false)
@@ -123,13 +123,13 @@ export default function UserManagement() {
         })
       }
       await apiService.deleteUser(user.id)
-      toast.success('User deleted')
+      toast.success('用户已删除')
     } catch (e) {
       console.error('Delete user failed:', e)
       // Revert
       setUsers(prevUsers)
       setPagination(prevPagination)
-      toast.error('Delete user failed')
+      toast.error('删除用户失败')
     } finally {
       setLoading(false)
     }
@@ -145,12 +145,12 @@ export default function UserManagement() {
         cur.map((u: any) => (u.id === user.id ? { ...u, isActive: nextIsActive } : u))
       )
       await apiService.updateUser(user.id, { isActive: nextIsActive })
-      toast.success('User updated')
+      toast.success('用户已更新')
     } catch (e) {
       console.error('Update user failed:', e)
       // Revert
       setUsers(prevUsers)
-      toast.error('Update user failed')
+      toast.error('更新用户失败')
     } finally {
       setLoading(false)
     }
@@ -165,11 +165,11 @@ export default function UserManagement() {
       const updated = await apiService.updateUser(userId, values)
       // Replace with server response (authoritative)
       setUsers((cur) => cur.map((u: any) => (u.id === userId ? { ...u, ...updated } : u)))
-      toast.success('User saved')
+      toast.success('用户已保存')
     } catch (e) {
       console.error('Save user failed:', e)
       setUsers(prevUsers)
-      toast.error('Save user failed')
+      toast.error('保存用户失败')
     } finally {
       setLoading(false)
     }
@@ -181,8 +181,8 @@ export default function UserManagement() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>Manage user access, roles, and status</CardDescription>
+              <CardTitle>用户管理</CardTitle>
+              <CardDescription>管理用户访问权限、角色和状态</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -193,7 +193,7 @@ export default function UserManagement() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 type="text"
-                placeholder="Search users..."
+                placeholder="搜索用户..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -203,16 +203,16 @@ export default function UserManagement() {
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-500">Filters:</span>
+                <span className="text-sm text-gray-500">筛选:</span>
               </div>
               <select 
                 className="h-10 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
               >
-                <option value="">All Roles</option>
-                <option value="ADMIN">Admin</option>
-                <option value="CUSTOMER">Customer</option>
+                <option value="">所有角色</option>
+                <option value="ADMIN">管理员</option>
+                <option value="CUSTOMER">客户</option>
               </select>
 
               <select 
@@ -220,9 +220,9 @@ export default function UserManagement() {
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+                <option value="">所有状态</option>
+                <option value="Active">激活</option>
+                <option value="Inactive">未激活</option>
               </select>
             </div>
           </div>
@@ -238,24 +238,24 @@ export default function UserManagement() {
               <table className="w-full caption-bottom text-sm">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">User Info</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Role</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Status</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">Joined Date</th>
-                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground text-gray-500">Actions</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">用户信息</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">角色</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">状态</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-gray-500">加入日期</th>
+                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground text-gray-500">操作</th>
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
                   {loading && users.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-4 text-center text-gray-500">Loading users...</td>
+                      <td colSpan={5} className="p-4 text-center text-gray-500">正在加载用户...</td>
                     </tr>
                   ) : users.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-gray-500">
                         <div className="flex flex-col items-center gap-2">
                           <User className="w-8 h-8 text-gray-300" />
-                          <p>No users found matching your criteria.</p>
+                          <p>未找到匹配条件的用户。</p>
                         </div>
                       </td>
                     </tr>
@@ -280,7 +280,7 @@ export default function UserManagement() {
                         <Badge variant={user.isActive ? 'success' : 'danger'}>
                           <div className="flex items-center gap-1">
                             {user.isActive ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                            {user.isActive ? 'Active' : 'Inactive'}
+                            {user.isActive ? '激活' : '未激活'}
                           </div>
                         </Badge>
                       </td>
@@ -294,7 +294,7 @@ export default function UserManagement() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => setEditTarget(user)}
-                            title="Edit User"
+                            title="编辑用户"
                           >
                             <Edit className="h-4 w-4 text-blue-600" />
                           </Button>
@@ -303,7 +303,7 @@ export default function UserManagement() {
                             size="sm"
                             className={`h-8 w-8 p-0 ${user.isActive ? 'hover:bg-red-50 border-red-200' : 'hover:bg-green-50 border-green-200'}`}
                             onClick={() => setToggleTarget(user)}
-                            title={user.isActive ? 'Deactivate User' : 'Activate User'}
+                            title={user.isActive ? '停用用户' : '激活用户'}
                           >
                             {user.isActive ? (
                               <XCircle className="h-4 w-4 text-red-600" />
@@ -316,7 +316,7 @@ export default function UserManagement() {
                             size="sm"
                             className="h-8 w-8 p-0 hover:bg-red-50 border-red-200"
                             onClick={() => setDeleteTarget(user)}
-                            title="Delete User"
+                            title="删除用户"
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
@@ -341,10 +341,10 @@ export default function UserManagement() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Delete user?"
-        description={deleteTarget ? `This will permanently delete "${deleteTarget.email}".` : undefined}
-        confirmText="Delete"
-        cancelText="Cancel"
+        title="删除用户？"
+        description={deleteTarget ? `这将永久删除 "${deleteTarget.email}"。` : undefined}
+        confirmText="删除"
+        cancelText="取消"
         confirmDisabled={loading}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null)
@@ -357,10 +357,10 @@ export default function UserManagement() {
 
       <ConfirmModal
         open={!!toggleTarget}
-        title={toggleTarget?.isActive ? "Deactivate user?" : "Activate user?"}
-        description={toggleTarget ? `User: ${toggleTarget.email}` : undefined}
-        confirmText={toggleTarget?.isActive ? "Deactivate" : "Activate"}
-        cancelText="Cancel"
+        title={toggleTarget?.isActive ? "停用用户？" : "激活用户？"}
+        description={toggleTarget ? `用户: ${toggleTarget.email}` : undefined}
+        confirmText={toggleTarget?.isActive ? "停用" : "激活"}
+        cancelText="取消"
         confirmDisabled={loading}
         onOpenChange={(open) => {
           if (!open) setToggleTarget(null)

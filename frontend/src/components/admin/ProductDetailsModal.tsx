@@ -51,11 +51,11 @@ export function ProductDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-gray-900">Product Details</DialogTitle>
+          <DialogTitle className="text-2xl text-gray-900">产品详情</DialogTitle>
           <DialogDescription className="text-gray-500">
-            {product?.name_en ? `${product.name_zh} (${product.name_en})` : "Product Information"}
+            {product?.name_en ? `${product.name_zh} (${product.name_en})` : "产品信息"}
           </DialogDescription>
         </DialogHeader>
 
@@ -66,7 +66,7 @@ export function ProductDetailsModal({
         ) : error ? (
           <div className="p-4 bg-red-50 text-red-700 rounded-lg">{error}</div>
         ) : !product ? (
-          <div className="text-center p-8 text-gray-500">No product data available.</div>
+          <div className="text-center p-8 text-gray-500">暂无产品数据。</div>
         ) : (
           <div className="space-y-6">
             <div className="flex flex-wrap gap-2 pb-4 border-b">
@@ -76,10 +76,10 @@ export function ProductDetailsModal({
                 className="rounded-full"
                 onClick={async () => {
                   const ok = await copyText(product.id);
-                  ok ? toast.success("ID Copied") : toast.error("Failed");
+                  ok ? toast.success("ID 已复制") : toast.error("复制失败");
                 }}
               >
-                Copy ID
+                复制 ID
               </Button>
               <Button
                 size="sm"
@@ -88,16 +88,16 @@ export function ProductDetailsModal({
                 disabled={!product.slug}
                 onClick={async () => {
                   const ok = await copyText(product.slug);
-                  ok ? toast.success("Slug Copied") : toast.error("Failed");
+                  ok ? toast.success("Slug 已复制") : toast.error("复制失败");
                 }}
               >
-                Copy Slug
+                复制 Slug
               </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">Basic Info</h4>
+                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">基本信息</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between"><span className="text-gray-500">ID</span> <span className="font-mono text-gray-700">{product.id.substring(0, 8)}...</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Slug</span> <span className="text-gray-900 font-medium">{product.slug}</span></div>
@@ -108,21 +108,21 @@ export function ProductDetailsModal({
               </div>
 
               <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">Pricing & Inventory</h4>
+                <h4 className="font-semibold text-gray-900 mb-3 uppercase tracking-wider text-xs">定价与库存</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between"><span className="text-gray-500">Price</span> <span className="text-gray-900 font-bold text-lg">${product.price}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Stock Level</span> <span className="text-gray-900 font-medium">{product.stock} units</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Created</span> <span className="text-gray-700">{product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Last Updated</span> <span className="text-gray-700">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString() : "-"}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">库存数量</span> <span className="text-gray-900 font-medium">{product.stock} 件</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">创建时间</span> <span className="text-gray-700">{product.createdAt ? new Date(product.createdAt).toLocaleDateString() : "-"}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">最后更新</span> <span className="text-gray-700">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString() : "-"}</span></div>
                 </div>
               </div>
             </div>
 
             <div className="border rounded-xl p-5">
-              <h4 className="font-semibold text-gray-900 mb-4 uppercase tracking-wider text-xs">Introduction Sections</h4>
+              <h4 className="font-semibold text-gray-900 mb-4 uppercase tracking-wider text-xs">介绍部分</h4>
 
               {sections.length === 0 ? (
-                <div className="text-gray-400 text-sm italic">No sections.</div>
+                <div className="text-gray-400 text-sm italic">暂无部分。</div>
               ) : (
                 <div className="space-y-4">
                   {sections
@@ -140,7 +140,7 @@ export function ProductDetailsModal({
                               {s?.title_zh || `Section ${idx + 1}`}
                             </div>
                             <div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed bg-white p-3 rounded border border-gray-100 min-h-[60px]">
-                              {s?.content_zh || <span className="text-gray-400 italic">No content.</span>}
+                              {s?.content_zh || <span className="text-gray-400 italic">暂无内容。</span>}
                             </div>
                           </div>
 
@@ -153,7 +153,7 @@ export function ProductDetailsModal({
                               {s?.title_en || `Section ${idx + 1}`}
                             </div>
                             <div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed bg-white p-3 rounded border border-gray-100 min-h-[60px]">
-                              {s?.content_en || <span className="text-gray-400 italic">No content.</span>}
+                              {s?.content_en || <span className="text-gray-400 italic">暂无内容。</span>}
                             </div>
                           </div>
                         </div>
@@ -164,7 +164,7 @@ export function ProductDetailsModal({
             </div>
 
             <div className="border rounded-xl p-5">
-              <h4 className="font-semibold text-gray-900 mb-4 uppercase tracking-wider text-xs">Media Gallery</h4>
+              <h4 className="font-semibold text-gray-900 mb-4 uppercase tracking-wider text-xs">媒体库</h4>
               <div className="space-y-4">
                 <div>
                   <span className="text-xs font-medium text-gray-500 mb-2 block">MAIN IMAGE</span>
@@ -175,11 +175,11 @@ export function ProductDetailsModal({
                       </div>
                       <div className="flex-1 min-w-0">
                          <div className="text-sm text-blue-600 break-all bg-blue-50 p-2 rounded border border-blue-100 font-mono">{product.mainImage}</div>
-                         <Button size="sm" variant="ghost" className="mt-2 text-gray-500 h-8" onClick={() => copyText(product.mainImage)}>Copy URL</Button>
+                         <Button size="sm" variant="ghost" className="mt-2 text-gray-500 h-8" onClick={() => copyText(product.mainImage)}>复制 URL</Button>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-gray-400 text-sm italic">No main image set.</div>
+                    <div className="text-gray-400 text-sm italic">未设置主图。</div>
                   )}
                 </div>
 
@@ -195,7 +195,7 @@ export function ProductDetailsModal({
                       ))}
                     </div>
                   ) : (
-                    <div className="text-gray-400 text-sm italic">No additional images.</div>
+                    <div className="text-gray-400 text-sm italic">暂无附加图片。</div>
                   )}
                 </div>
               </div>
@@ -205,7 +205,7 @@ export function ProductDetailsModal({
 
         <DialogFooter className="mt-6 border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-full px-6">
-            Close
+            关闭
           </Button>
         </DialogFooter>
       </DialogContent>
