@@ -151,7 +151,7 @@ CAC是一个功能完整的电商独立站PWA应用，采用现代化技术栈�
 #### 1️⃣ 克隆项目
 
 ```bash
-git clone https://github.com/your-username/CAC.git
+git clone https://github.com/Focus695/CAC.git
 cd CAC
 ```
 
@@ -445,9 +445,9 @@ npm audit fix
 
 ## 📞 联系方式
 
-- **项目主页**：https://github.com/your-username/CAC
-- **问题反馈**：https://github.com/your-username/CAC/issues
-- **讨论区**：https://github.com/your-username/CAC/discussions
+- **项目主页**：https://github.com/Focus695/CAC
+- **问题反馈**：https://github.com/Focus695/CAC/issues
+- **讨论区**：https://github.com/Focus695/CAC/discussions
 
 ---
 
