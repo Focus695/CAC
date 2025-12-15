@@ -44,7 +44,7 @@ describe('AuthController cookie isolation', () => {
   it('sets only user cookie on user login', async () => {
     authService.login.mockResolvedValue({
       access_token: 'user-token',
-      user: { id: '1', email: 'u@example.com', role: 'USER' },
+      user: { id: '1', email: 'u@example.com', username: 'user1', role: 'USER' },
     });
 
     await controller.login({ user: { id: '1', email: 'u@example.com', role: 'USER' } } as any, { email: '', password: '' } as any, res as any);
@@ -62,7 +62,7 @@ describe('AuthController cookie isolation', () => {
   it('sets only admin cookie on admin login', async () => {
     authService.login.mockResolvedValue({
       access_token: 'admin-token',
-      user: { id: '2', email: 'a@example.com', role: 'ADMIN' },
+      user: { id: '2', email: 'a@example.com', username: 'admin', role: 'ADMIN' },
     });
 
     await controller.adminLogin({ user: { id: '2', email: 'a@example.com', role: 'ADMIN' } } as any, { email: '', password: '' } as any, res as any);

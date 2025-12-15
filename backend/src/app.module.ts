@@ -9,7 +9,6 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
-import { GamificationModule } from './modules/gamification/gamification.module';
 import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
@@ -32,7 +31,6 @@ import { AdminModule } from './modules/admin/admin.module';
     CartModule,
     OrdersModule,
     ReviewsModule,
-    GamificationModule,
     AdminModule,
   ],
 })

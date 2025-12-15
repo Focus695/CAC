@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { X, Package, Calendar, CheckCircle, Clock } from 'lucide-react';
 import { apiService } from '@/services/api';
 import toast from 'react-hot-toast';
@@ -42,7 +41,6 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { t, i18n } = useTranslation('common');
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -74,7 +72,7 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
       setOrders(userOrders);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
-      toast.error(t('order.fetchOrdersFailed'));
+      toast.error('Failed to fetch orders. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -84,15 +82,15 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
   const getStatusInfo = (status: Order['status']) => {
     switch (status) {
       case 'CONFIRMED':
-        return { icon: Clock, text: t('order.confirmed'), color: 'text-amber-600' };
+        return { icon: Clock, text: 'Confirmed', color: 'text-amber-600' };
       case 'SHIPPED':
-        return { icon: Package, text: t('order.shipped'), color: 'text-blue-600' };
+        return { icon: Package, text: 'Shipped', color: 'text-blue-600' };
       case 'DELIVERED':
-        return { icon: CheckCircle, text: t('order.delivered'), color: 'text-green-600' };
+        return { icon: CheckCircle, text: 'Delivered', color: 'text-green-600' };
       case 'CANCELED':
-        return { icon: X, text: t('order.canceled'), color: 'text-red-600' };
+        return { icon: X, text: 'Canceled', color: 'text-red-600' };
       default:
-        return { icon: Clock, text: t('order.pending'), color: 'text-gray-600' };
+        return { icon: Clock, text: 'Pending', color: 'text-gray-600' };
     }
   };
 
@@ -131,7 +129,7 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
           {isLoading ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-4">
               <div className="w-16 h-16 border-4 border-stone-200 border-t-cinnabar rounded-full animate-spin"></div>
-              <p className="font-serif text-lg">{t('order.loadingOrders')}</p>
+              <p className="font-serif text-lg">Loading your orders...</p>
             </div>
           ) : orders.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-4 opacity-60">
@@ -152,7 +150,7 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
               </div>
-              <p className="font-serif text-lg">{t('order.noOrders')}</p>
+              <p className="font-serif text-lg">You have no orders yet.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -164,7 +162,7 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
                   <div key={order.id} className="bg-stone-50 rounded-sm border border-stone-200 p-4 shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <p className="text-sm font-serif text-stone-500">{t('order.orderNumber')}</p>
+                        <p className="text-sm font-serif text-stone-500">Order Number</p>
                         <p className="font-mono font-semibold text-sandalwood">{order.orderNumber}</p>
                       </div>
                       <div className="flex items-center gap-1">
@@ -176,7 +174,7 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
                     <div className="flex gap-3 mb-4">
                       <Calendar size={16} className="text-stone-400" />
                       <p className="text-xs text-stone-500">
-                        {new Date(order.createdAt).toLocaleDateString(i18n.language, {
+                        {new Date(order.createdAt).toLocaleDateString(undefined, {
                           year: 'numeric',
                           month: '2-digit',
                           day: '2-digit',
@@ -240,7 +238,7 @@ const OrderDrawer: React.FC<OrderDrawerProps> = ({
                     </div>
 
                     <div className="flex justify-between font-serif font-bold border-t border-stone-300 pt-3">
-                      <span>{t('order.total')}</span>
+                      <span>Total</span>
                       <span className="text-cinnabar">${parseFloat(order.total).toFixed(2)}</span>
                     </div>
                   </div>

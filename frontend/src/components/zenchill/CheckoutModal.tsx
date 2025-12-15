@@ -2,7 +2,6 @@
 "use client";
 import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { CartItem } from '@/types';
 import { apiService } from '@/services/api';
 import toast from 'react-hot-toast';
@@ -47,7 +46,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
   };
   
   const total = calculateTotal();
-  const { t } = useTranslation('common');
   const [step, setStep] = useState<'form' | 'processing' | 'success'>('form');
   const [formData, setFormData] = useState({
     firstName: '',
@@ -82,7 +80,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
 
     // Validate form
     if (!formData.firstName || !formData.lastName || !formData.phone || !formData.address1) {
-      toast.error(t('checkout.pleaseFillAllFields'));
+      toast.error('Please fill in all required fields.');
       return;
     }
 
@@ -123,7 +121,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
 
     } catch (error) {
       console.error('Order process failed:', error);
-      toast.error(t('checkout.orderProcessingFailed'));
+      toast.error('Order processing failed. Please try again.');
       setStep('form');
     }
   };
@@ -153,7 +151,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
           <div className="flex flex-col md:flex-row h-full md:h-[600px]">
             {/* Left: Order Summary */}
             <div className="w-full md:w-5/12 bg-stone-100/50 p-8 border-r border-stone-200 overflow-y-auto">
-              <h3 className="font-serif text-xl text-sandalwood mb-6 border-b border-stone-300 pb-2">{t('checkout.orderSummary')}</h3>
+              <h3 className="font-serif text-xl text-sandalwood mb-6 border-b border-stone-300 pb-2">Order Summary</h3>
               <div className="space-y-4">
                 {cartItems.length === 0 ? (
                   <p className="text-stone-400 text-sm italic">No items in cart</p>
@@ -216,11 +214,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                 <X size={24} />
               </button>
               
-              <h3 className="font-serif text-2xl text-sandalwood mb-8">{t('checkout.shippingAddress')}</h3>
+              <h3 className="font-serif text-2xl text-sandalwood mb-8">Shipping Address</h3>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-1">
-                     <label className="text-xs text-stone-500 uppercase tracking-wider">{t('checkout.firstName')}</label>
+                     <label className="text-xs text-stone-500 uppercase tracking-wider">First Name</label>
                      <input
                        required
                        type="text"
@@ -231,7 +229,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                        placeholder="John" />
                    </div>
                    <div className="space-y-1">
-                     <label className="text-xs text-stone-500 uppercase tracking-wider">{t('checkout.lastName')}</label>
+                     <label className="text-xs text-stone-500 uppercase tracking-wider">Last Name</label>
                      <input
                        required
                        type="text"
@@ -244,7 +242,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                 </div>
 
                 <div className="space-y-1">
-                   <label className="text-xs text-stone-500 uppercase tracking-wider">{t('checkout.phone')}</label>
+                   <label className="text-xs text-stone-500 uppercase tracking-wider">Phone</label>
                    <input
                      required
                      type="tel"
@@ -255,7 +253,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                 </div>
 
                 <div className="space-y-1">
-                   <label className="text-xs text-stone-500 uppercase tracking-wider">{t('checkout.address')}</label>
+                   <label className="text-xs text-stone-500 uppercase tracking-wider">Address</label>
                      <input
                      required
                      type="text"
@@ -268,9 +266,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
 
                 <div className="pt-8">
                   <button type="submit" className="w-full bg-sandalwood text-white py-3 font-serif hover:bg-cinnabar transition-colors duration-300 shadow-md">
-                    {t('checkout.confirmPayment')}
+                    Confirm Payment
                   </button>
-                  <p className="text-center text-xs text-stone-400 mt-3">{t('checkout.encryptedConnection')}</p>
+                  <p className="text-center text-xs text-stone-400 mt-3">Your payment is encrypted and secure.</p>
                 </div>
               </form>
             </div>
@@ -298,13 +296,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, cartItem
                </div>
             </div>
 
-            <h3 className="text-2xl font-serif text-sandalwood mb-4">{t('checkout.thankYou')}</h3>
+            <h3 className="text-2xl font-serif text-sandalwood mb-4">Thank you for your purchase!</h3>
             <p className="text-stone-500 font-light max-w-sm mb-10">
-               {t('checkout.orderSuccessMessage')}
+               Your order has been placed successfully. We&apos;ll send you an email with the details shortly.
             </p>
 
             <button onClick={handleFinish} className="bg-transparent border border-sandalwood text-sandalwood px-8 py-2 hover:bg-sandalwood hover:text-white transition-all duration-300 font-serif">
-              {t('checkout.backToHome')}
+              Back to Home
             </button>
           </div>
         )}

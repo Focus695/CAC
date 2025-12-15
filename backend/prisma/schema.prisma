@@ -21,7 +21,6 @@ model User {
   updatedAt    DateTime             @updatedAt
   addresses    Address[]
   cartItems    CartItem[]
-  gamification GamificationProfile?
   orders       Order[]
   reviews      Review[]
 
@@ -189,21 +188,6 @@ model Review {
 
   @@unique([userId, productId])
   @@map("reviews")
-}
-
-model GamificationProfile {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  points       Int      @default(0)
-  level        Int      @default(1)
-  experience   Int      @default(0)
-  badges       String[]
-  achievements String[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("gamification_profiles")
 }
 
 enum UserRole {

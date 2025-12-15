@@ -1,6 +1,5 @@
 "use client";
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 
 interface SettingsDrawerProps {
@@ -14,7 +13,6 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onClose,
   userEmail,
 }) => {
-  const { t } = useTranslation('common');
   // Prevent background scrolling when drawer is open
   React.useEffect(() => {
     if (isOpen) {
@@ -48,8 +46,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-paper relative">
           <div>
-            <h2 className="text-2xl font-serif text-sandalwood">{t('settings.accountSettings')}</h2>
-            <p className="text-xs text-stone-500 font-light mt-1">{t('settings.accountSettings')}</p>
+            <h2 className="text-2xl font-serif text-sandalwood">Account Settings</h2>
+            <p className="text-xs text-stone-500 font-light mt-1">Manage your account information</p>
           </div>
           <button
             onClick={onClose}
@@ -62,26 +60,26 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         {/* Settings Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-sandalwood">{t('settings.accountInfo')}</h3>
+            <h3 className="text-sm font-medium text-sandalwood">Account Info</h3>
             <div className="p-4 bg-white rounded-sm border border-stone-100 shadow-sm">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-stone-500">{t('settings.email')}</span>
+                <span className="text-sm text-stone-500">Email</span>
                 <span className="text-sm font-serif text-sandalwood">{userEmail}</span>
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-sandalwood">{t('settings.preferences')}</h3>
+            <h3 className="text-sm font-medium text-sandalwood">Preferences</h3>
             <div className="p-4 bg-white rounded-sm border border-stone-100 shadow-sm space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-stone-500">{t('settings.pushNotifications')}</span>
+                <span className="text-sm text-stone-500">Push Notifications</span>
                 <div className="w-10 h-5 rounded-full bg-stone-200 relative">
                   <div className="absolute left-1 top-1 w-3 h-3 rounded-full bg-white transition-transform duration-300"></div>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-stone-500">{t('settings.darkMode')}</span>
+                <span className="text-sm text-stone-500">Dark Mode</span>
                 <div className="w-10 h-5 rounded-full bg-stone-200 relative">
                   <div className="absolute left-1 top-1 w-3 h-3 rounded-full bg-white transition-transform duration-300"></div>
                 </div>
@@ -90,13 +88,13 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-sandalwood">{t('settings.security')}</h3>
+            <h3 className="text-sm font-medium text-sandalwood">Security</h3>
             <div className="space-y-2">
               <button className="w-full text-left p-4 bg-white rounded-sm border border-stone-100 shadow-sm hover:bg-stone-50 transition-colors">
-                <span className="text-sm font-serif text-sandalwood">{t('settings.changePassword')}</span>
+                <span className="text-sm font-serif text-sandalwood">Change Password</span>
               </button>
               <button className="w-full text-left p-4 bg-white rounded-sm border border-stone-100 shadow-sm hover:bg-stone-50 transition-colors">
-                <span className="text-sm font-serif text-sandalwood">{t('settings.bindPhone')}</span>
+                <span className="text-sm font-serif text-sandalwood">Bind Phone Number</span>
               </button>
             </div>
           </div>

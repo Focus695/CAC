@@ -54,14 +54,3 @@ export interface OrderItem {
   price: number;
   product: Product;
 }
-
-export interface GamificationProfile {
-  id: string;
-  userId: string;
-  points: number;
-  level: number;
-  experience: number;
-  badges: string[];
-  achievements: string[];
-}
-
