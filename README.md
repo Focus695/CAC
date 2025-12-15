@@ -22,7 +22,8 @@
 </p>
 
 ---
-
+## 📺 展示视频
+<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=115723598829366&bvid=BV1FhqsBfE36&cid=25930699990&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 ## 📖 项目简介
 
 CAC是一个功能完整的电商独立站PWA应用，采用现代化技术栈构建。项目包含完整的用户端购物体验和功能强大的管理后台，支持产品管理、订单处理、用户管理、分类管理等核心电商功能。
