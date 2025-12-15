@@ -22,13 +22,19 @@
 </p>
 
 ---
-## 📺 展示视频
-<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=115723598829366&bvid=BV1FhqsBfE36&cid=25930699990&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
-## 📖 项目简介
 
+## 📖 项目简介
+本项目是AI混合编程的结果，并不完全是vibe coding，大致UI是自己画的，代码基础架构是自己设计的，然后自己写一些特殊的动态效果，还有一些Ai把我搞烦了的地方都自己写。
+整体用Gemini3 pro给我丰富UI，数据库架构和数据结构等和整个代码基础是Claude code写的，具体功能点Claude code和Cursor 混合着写。
+### 一句话简介：
 CAC是一个功能完整的电商独立站PWA应用，采用现代化技术栈构建。项目包含完整的用户端购物体验和功能强大的管理后台，支持产品管理、订单处理、用户管理、分类管理等核心电商功能。
 
-### 为什么选择CAC？
+## 📺 展示视频
+【和我的月薪140元的克劳德同事一起编写的前后端完整的电商独立站】
+
+https://www.bilibili.com/video/BV1FhqsBfE36/?share_source=copy_web&vd_source=0d75fe8d064dd8f336713ab1577d66b3
+
+### CAC在当下
 
 - ✅ **开箱即用**：完整的前后端实现，可直接部署使用
 - ✅ **现代技术栈**：Next.js 14 + NestJS + PostgreSQL，采用最新技术
